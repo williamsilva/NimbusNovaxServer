@@ -1,12 +1,14 @@
 package com.nimbusnovax.administracao.core;
 
 import com.nimbusnovax.administracao.dto.request.AgentRequest;
+import com.nimbusnovax.administracao.dto.response.AgentOptionResponse;
 import com.nimbusnovax.administracao.dto.response.AgentResponse;
 import com.nimbusnovax.administracao.model.Agent;
 import com.nimbusnovax.administracao.model.AgentAddress;
 import com.nimbusnovax.administracao.model.AgentContact;
 import com.nimbusnovax.administracao.model.AgentType;
 import com.nimbusnovax.administracao.model.City;
+import com.nimbusnovax.administracao.model.enums.StatusEnum;
 import com.nimbusnovax.administracao.model.enums.TypeAgentEnum;
 import com.nimbusnovax.administracao.repository.AgentRepository;
 import com.nimbusnovax.administracao.repository.CityRepository;
@@ -120,6 +122,30 @@ public class AgentService {
 
   private static Instant orEpoch(Instant value) {
     return value == null ? Instant.EPOCH : value;
+  }
+
+  /** Item leve para popular selects de outros módulos (ex.: cliente/promotor/guia turístico do
+   *  formulário de Voucher) - todos os agentes com o papel pedido, incluindo os inativos nesse
+   *  papel (marcados com {@code inactive=true} para o frontend desabilitar a opção, mesmo padrão
+   *  de "optionDisabled" já usado no sistema legado). */
+  @Transactional(readOnly = true)
+  public List<AgentOptionResponse> findOptions(TypeAgentEnum role) {
+    requireAuthority("AGENTES_CONSULT");
+    return repository.findAll().stream()
+        .filter(a -> a.getAgentTypes().stream().anyMatch(t -> t.getTypeAgentEnum() == role))
+        .map(a -> new AgentOptionResponse(a.getId(), a.getName(), a.getDocument(), roleStatus(a, role) != StatusEnum.ACTIVE))
+        .sorted(Comparator.comparing(AgentOptionResponse::name, String.CASE_INSENSITIVE_ORDER))
+        .toList();
+  }
+
+  private StatusEnum roleStatus(Agent agent, TypeAgentEnum role) {
+    return switch (role) {
+      case CLIENT -> agent.getStatusClientEnum();
+      case PROVIDER -> agent.getStatusProviderEnum();
+      case PROMOTER -> agent.getStatusPromoterEnum();
+      case EMPLOYEE -> agent.getStatusEmployeeEnum();
+      case TOUR_GUIDE -> agent.getStatusTourGuideEnum();
+    };
   }
 
   public AgentResponse create(AgentRequest request) {

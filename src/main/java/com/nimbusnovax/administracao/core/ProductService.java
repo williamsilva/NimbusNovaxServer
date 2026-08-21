@@ -1,6 +1,7 @@
 package com.nimbusnovax.administracao.core;
 
 import com.nimbusnovax.administracao.dto.request.ProductRequest;
+import com.nimbusnovax.administracao.dto.response.ProductOptionResponse;
 import com.nimbusnovax.administracao.dto.response.ProductResponse;
 import com.nimbusnovax.administracao.model.Product;
 import com.nimbusnovax.administracao.model.enums.StatusEnum;
@@ -95,6 +96,19 @@ public class ProductService {
 
   private static Instant orEpoch(Instant value) {
     return value == null ? Instant.EPOCH : value;
+  }
+
+  /** Item leve para os selects de item do formulário de Voucher (ingressos/alimentação) - produtos
+   *  do tipo pedido, incluindo os inativos (marcados com {@code inactive=true} para o frontend
+   *  desabilitar a opção). */
+  @Transactional(readOnly = true)
+  public List<ProductOptionResponse> findOptions(TypeProductEnum typeProduct) {
+    requireAuthority("PRODUTOS_CONSULT");
+    return repository.findAll().stream()
+        .filter(p -> p.getTypeProductEnum() == typeProduct)
+        .map(p -> new ProductOptionResponse(p.getId(), p.getName(), p.getAmount(), p.getStatusEnum() != StatusEnum.ACTIVE))
+        .sorted(Comparator.comparing(ProductOptionResponse::name, String.CASE_INSENSITIVE_ORDER))
+        .toList();
   }
 
   public ProductResponse create(ProductRequest request) {
