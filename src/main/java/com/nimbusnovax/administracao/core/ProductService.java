@@ -98,15 +98,15 @@ public class ProductService {
     return value == null ? Instant.EPOCH : value;
   }
 
-  /** Item leve para os selects de item do formulário de Voucher (ingressos/alimentação) - produtos
-   *  do tipo pedido, incluindo os inativos (marcados com {@code inactive=true} para o frontend
-   *  desabilitar a opção). */
+  /** Item leve para os selects de item do formulário de Voucher (ingressos/alimentação) - só
+   *  produtos ATIVOS do tipo pedido (produto inativo não deve ser oferecido para venda em um
+   *  voucher novo). */
   @Transactional(readOnly = true)
   public List<ProductOptionResponse> findOptions(TypeProductEnum typeProduct) {
     requireAuthority("PRODUTOS_CONSULT");
     return repository.findAll().stream()
-        .filter(p -> p.getTypeProductEnum() == typeProduct)
-        .map(p -> new ProductOptionResponse(p.getId(), p.getName(), p.getAmount(), p.getStatusEnum() != StatusEnum.ACTIVE))
+        .filter(p -> p.getTypeProductEnum() == typeProduct && p.getStatusEnum() == StatusEnum.ACTIVE)
+        .map(p -> new ProductOptionResponse(p.getId(), p.getName(), p.getAmount()))
         .sorted(Comparator.comparing(ProductOptionResponse::name, String.CASE_INSENSITIVE_ORDER))
         .toList();
   }
