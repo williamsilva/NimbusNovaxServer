@@ -127,14 +127,16 @@ public class AgentService {
   /** Item leve para popular selects de outros módulos (ex.: cliente/promotor/guia turístico do
    *  formulário de Voucher) - todos os agentes com o papel pedido, incluindo os inativos nesse
    *  papel (marcados com {@code inactive=true} para o frontend desabilitar a opção, mesmo padrão
-   *  de "optionDisabled" já usado no sistema legado). */
+   *  de "optionDisabled" já usado no sistema legado). Ordenados com os ativos primeiro, depois
+   *  por nome - facilita achar quem de fato pode ser escolhido antes dos inativos. */
   @Transactional(readOnly = true)
   public List<AgentOptionResponse> findOptions(TypeAgentEnum role) {
     requireAuthority("AGENTES_CONSULT");
     return repository.findAll().stream()
         .filter(a -> a.getAgentTypes().stream().anyMatch(t -> t.getTypeAgentEnum() == role))
         .map(a -> new AgentOptionResponse(a.getId(), a.getName(), a.getDocument(), roleStatus(a, role) != StatusEnum.ACTIVE))
-        .sorted(Comparator.comparing(AgentOptionResponse::name, String.CASE_INSENSITIVE_ORDER))
+        .sorted(Comparator.comparing(AgentOptionResponse::inactive)
+            .thenComparing(AgentOptionResponse::name, String.CASE_INSENSITIVE_ORDER))
         .toList();
   }
 
