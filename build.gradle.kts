@@ -49,6 +49,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 	implementation("org.springframework.boot:spring-boot-starter-mail")
 
+	// com.nimbusnovax.voucher - geração de PDF (visualizar/enviar voucher) a partir de HTML/
+	// Thymeleaf. O sistema legado usava JasperReports (.jrxml); optamos por HTML->PDF aqui por ser
+	// consideravelmente mais simples de manter e não exigir compilar templates binários.
+	implementation("com.openhtmltopdf:openhtmltopdf-pdfbox:1.0.10")
+
 	runtimeOnly("org.postgresql:postgresql")
 
 	compileOnly("org.projectlombok:lombok")

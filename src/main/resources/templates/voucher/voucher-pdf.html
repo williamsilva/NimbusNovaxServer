@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
+    .header { text-align: center; padding-bottom: 12px; border-bottom: 2px solid #0d9ff0; }
+    .header h1 { margin: 0; color: #0d9ff0; font-size: 20px; }
+    .box { margin-top: 16px; }
+    .box table { width: 100%; border-collapse: collapse; }
+    .box td { padding: 4px 6px; vertical-align: top; }
+    .label { color: #777; font-size: 10px; text-transform: uppercase; }
+    table.items { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    table.items th, table.items td { border: 1px solid #ccc; padding: 4px 6px; font-size: 11px; }
+    table.items th { background: #eaeaea; text-align: left; }
+    .total { text-align: right; font-size: 14px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>VOUCHER</h1>
+    <div th:text="'Nº ' + ${voucher.code}">Nº CODE</div>
+  </div>
+
+  <div class="box">
+    <table>
+      <tr>
+        <td><span class="label">Cliente</span><br/><span th:text="${voucher.client.name}">Cliente</span></td>
+        <td><span class="label">Promotor</span><br/><span th:text="${voucher.promoter.name}">Promotor</span></td>
+        <td><span class="label">Data da Visita</span><br/>
+          <span th:text="${#temporals.format(voucher.visitDate, 'dd/MM/yyyy')}">dd/mm/aaaa</span></td>
+      </tr>
+    </table>
+  </div>
+
+  <table class="items" th:if="${!voucher.tickets.isEmpty()}">
+    <thead>
+      <tr><th>Ingresso</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="item : ${voucher.tickets}">
+        <td th:text="${item.productName}">Produto</td>
+        <td th:text="${item.quantity}">0</td>
+        <td th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 2)}">R$ 0,00</td>
+        <td th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 2)}">R$ 0,00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="items" th:if="${!voucher.foods.isEmpty()}">
+    <thead>
+      <tr><th>Alimentação</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="item : ${voucher.foods}">
+        <td th:text="${item.productName}">Produto</td>
+        <td th:text="${item.quantity}">0</td>
+        <td th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 2)}">R$ 0,00</td>
+        <td th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 2)}">R$ 0,00</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="total" th:text="'Total: R$ ' + ${#numbers.formatDecimal(voucher.totalPrice, 1, 2)}">Total: R$ 0,00</div>
+</body>
+</html>

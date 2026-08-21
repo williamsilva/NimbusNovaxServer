@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body style="font-family: Arial; font-size: 14px; margin: 0; padding: 0;">
+
+<table align="center" border="0" cellpadding="0" cellspacing="0" style="border-collapse: collapse;" width="700">
+  <tr>
+    <td align="center" bgcolor="#78ab46" style="padding: 10px;">
+      <p style="color: #ffffff; margin: 0;" th:text="'Olá, ' + ${voucher.client.name}">Olá, Cliente</p>
+    </td>
+  </tr>
+  <tr>
+    <td bgcolor="#eaeaea" style="padding: 10px;">
+      <p>Estamos enviando para você o voucher para ser apresentado no dia de sua visita.</p>
+      <p>
+        Voucher <b th:text="${voucher.code}">CODE</b> -
+        visita em <span th:text="${#temporals.format(voucher.visitDate, 'dd/MM/yyyy')}">dd/mm/aaaa</span>.
+      </p>
+      <p>Aguardamos a sua visita.</p>
+    </td>
+  </tr>
+  <tr>
+    <td bgcolor="#777777" style="padding: 10px; color: #ffffff;">
+      NimbusNovax
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
