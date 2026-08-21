@@ -1,0 +1,81 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+
+  security:
+    oauth2:
+      client:
+        registration:
+          nimbusnovax-bff:
+            provider: nimbusnovax-as
+            client-id: ${NIMBUSNOVAX_BFF_CLIENT_ID:nimbusnovax-bff}
+            client-secret: ${NIMBUSNOVAX_BFF_CLIENT_SECRET}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            scope:
+              - openid
+              - profile
+        provider:
+          nimbusnovax-as:
+            # Tudo pelo issuer público (mesmo padrão do CardsyncServer, ver CARDSYNC_ISSUER em
+            # CardsyncServer/application-prod.yml) - a rede privada do Railway
+            # (NIMBUS_AUTH_INTERNAL_BASE_URL) era usada aqui como "otimização" pra chamadas
+            # backend->backend, mas nunca funcionou de fato em produção (hostname/porta interno
+            # incorretos ou private networking não habilitado entre os dois serviços) - toda
+            # chamada de token/jwk-set/user-info falhava, causando os 502/504 em
+            # /bff/v1/me/profile. NIMBUS_AUTH_INTERNAL_BASE_URL fica só como default local (ver
+            # application-dev.yml).
+            authorization-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/authorize
+            token-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/token
+            jwk-set-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/jwks
+            user-info-uri: ${NIMBUS_AUTH_ISSUER}/userinfo
+            user-name-attribute: sub
+
+server:
+  ssl:
+    enabled: false
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        secure: true
+        same-site: LAX
+
+nimbusnovax:
+  security:
+    issuer: ${NIMBUS_AUTH_ISSUER}
+
+    cookies:
+      domain: ${NIMBUSNOVAX_COOKIE_DOMAIN}
+      secure: ${NIMBUSNOVAX_COOKIE_SECURE:true}
+      same-site: ${NIMBUSNOVAX_COOKIE_SAMESITE:Lax}
+
+    resource-server:
+      enabled: ${NIMBUSNOVAX_RESOURCE_SERVER_ENABLED:true}
+      jwk-set-uri: ${NIMBUS_AUTH_ISSUER}/oauth2/jwks
+
+    web:
+      spa-base-url: ${NIMBUSNOVAX_SPA_BASE_URL}
+      allowed-origins:
+        - ${NIMBUSNOVAX_ALLOWED_ORIGIN}
+
+  nimbusauth:
+    base-url: ${NIMBUS_AUTH_ISSUER}
+    # Mesmo secret compartilhado já configurado no NimbusAuth e no CardsyncServer (Railway) -
+    # protege /internal/users (NimbusAuthInternalClient/UserDirectoryService).
+    internal-api-secret: ${NIMBUS_INTERNAL_API_SECRET}
+
+  # com.nimbusnovax.common.notification.mail.EmailProperties - default "fake" DE PROPÓSITO
+  # (mesmo em produção): nenhum evento de negócio dispara envio ainda, então não há motivo pra
+  # exigir credencial nenhuma configurada só pra este deploy não quebrar o boot. Trocar pra
+  # "api_key" (Brevo) só quando alguém configurar de verdade via env var OU pela tela
+  # Configurações > E-mail (que sobrescreve o valor abaixo, ver EmailSettingsService).
+  email:
+    impl: ${NIMBUSNOVAX_EMAIL_IMPL:fake}
+    from-name: ${NIMBUSNOVAX_EMAIL_FROM_NAME:NimbusNovax}
+    from-email: ${NIMBUSNOVAX_EMAIL_FROM_EMAIL:naoresponda@nimbussystems.com.br}
+    brevo:
+      base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
+      api-key: ${BREVO_API_KEY:}
