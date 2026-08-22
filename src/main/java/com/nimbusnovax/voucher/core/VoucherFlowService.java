@@ -47,7 +47,7 @@ public class VoucherFlowService {
     Voucher voucher = getOrThrow(id);
 
     if (voucher.getTotalPrice() == null || voucher.getTotalPrice().compareTo(BigDecimal.ZERO) <= 0) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot confirm a voucher with zero value");
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Não é possível confirmar um voucher com valor zerado.");
     }
 
     voucher.confirm();
@@ -69,8 +69,8 @@ public class VoucherFlowService {
     Voucher voucher = getOrThrow(id);
 
     if (voucher.getStatusEnum() != StatusVoucherEnum.CONFIRMED) {
-      throw new ResponseStatusException(
-          HttpStatus.CONFLICT, "Only a CONFIRMED voucher can be exchanged, current status: " + voucher.getStatusEnum());
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "Somente um voucher Confirmado pode ser trocado (status atual: " + voucher.getStatusEnum() + ").");
     }
 
     voucher.change();
@@ -87,7 +87,7 @@ public class VoucherFlowService {
     Voucher voucher = getOrThrow(id);
     CancellationReason reason = cancellationReasonRepository.findById(cancellationReasonId)
         .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND, "Cancellation reason not found: " + cancellationReasonId));
+            HttpStatus.NOT_FOUND, "Motivo de cancelamento não encontrado: " + cancellationReasonId));
 
     voucher.cancel(reason);
     voucher.setUpdatedById(currentUserId());
@@ -101,7 +101,7 @@ public class VoucherFlowService {
     // ainda em negociação, confirmado ou trocado pode ser enviado normalmente).
     var status = voucher.getStatusEnum();
     if (status == StatusVoucherEnum.CALLED_OFF || status == StatusVoucherEnum.OVERDUE) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Voucher " + status + " cannot be sent");
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Voucher com status " + status + " não pode ser enviado.");
     }
 
     List<String> recipients = voucher.getClient().getContacts().stream()
@@ -111,7 +111,7 @@ public class VoucherFlowService {
 
     if (recipients.isEmpty()) {
       throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Unable to send email. Registered contactless customer");
+          HttpStatus.BAD_REQUEST, "Não é possível enviar e-mail - o cliente não possui contato cadastrado.");
     }
 
     String replyTo = voucher.getPromoter().getContacts().stream()
@@ -119,7 +119,7 @@ public class VoucherFlowService {
         .filter(email -> email != null && !email.isBlank())
         .findFirst()
         .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.BAD_REQUEST, "Complete your promoter registration, invalid contact"));
+            HttpStatus.BAD_REQUEST, "Complete o cadastro do promotor - contato inválido."));
 
     VoucherResponse response = voucherService.toResponse(voucher);
     byte[] pdf = pdfService.renderPdf(response);

@@ -160,7 +160,8 @@ public class VoucherService {
 
     if (pending >= config.getNumberPendingVouchers()) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, String.format(
-          "There are %d pending vouchers for client '%s', new saving prohibited.", pending, client.getName()));
+          "O cliente '%s' já possui %d vouchers pendentes - não é possível cadastrar um novo voucher.",
+          client.getName(), pending));
     }
 
     Voucher voucher = new Voucher();
@@ -186,7 +187,8 @@ public class VoucherService {
     Voucher voucher = getOrThrow(id);
 
     if (!voucher.canBeModified()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Voucher " + voucher.getStatusEnum() + " cannot be changed");
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "Voucher com status " + voucher.getStatusEnum() + " não pode ser alterado.");
     }
 
     Agent client = findAgentOrThrow(request.clientId());
@@ -214,14 +216,14 @@ public class VoucherService {
 
     if (voucher.getStatusEnum() != StatusVoucherEnum.DEALING) {
       throw new ResponseStatusException(
-          HttpStatus.CONFLICT, "Voucher " + voucher.getStatusEnum() + " cannot be deleted");
+          HttpStatus.CONFLICT, "Voucher com status " + voucher.getStatusEnum() + " não pode ser excluído.");
     }
 
     try {
       repository.delete(voucher);
       repository.flush();
     } catch (DataIntegrityViolationException e) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete a voucher that has links");
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Não é possível excluir um voucher que possui vínculos.");
     }
   }
 
@@ -284,7 +286,7 @@ public class VoucherService {
 
     if (dealing > 0) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, String.format(
-          "Client '%s' already has a voucher being negotiated (DEALING).", client.getName()));
+          "O cliente '%s' já possui um voucher em negociação.", client.getName()));
     }
   }
 
