@@ -1,3 +1,3 @@
--- Fase 0: baseline migration. Enables PostGIS so `geography(Point, 4326)` columns
--- (Work.location, Measurement.location) are available starting Fase 2.
-CREATE EXTENSION IF NOT EXISTS postgis;
+-- Fase 0: baseline migration. PostGIS nao e usado por nenhuma entidade do NimbusNovax
+-- (era codigo herdado do clone do NimbusFlow) - extensao removida para nao depender de
+-- um Postgres com PostGIS instalado (o Postgres gerenciado do Railway nao tem).
