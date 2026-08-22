@@ -30,6 +30,7 @@ public class VoucherPdfService {
   byte[] renderPdf(VoucherDocumentContext doc) {
     Context context = new Context();
     context.setVariable("voucher", doc.voucher());
+    context.setVariable("clientDocument", doc.clientDocument());
     context.setVariable("clientCity", doc.clientCity());
     context.setVariable("clientPhone", doc.clientPhone());
     context.setVariable("clientEmail", doc.clientEmail());

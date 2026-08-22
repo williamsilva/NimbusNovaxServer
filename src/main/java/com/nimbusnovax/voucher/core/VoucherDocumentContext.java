@@ -12,6 +12,7 @@ import java.util.List;
  *  ({@code send-voucher.html}) quanto pelo PDF anexado ({@code voucher-pdf.html}). */
 record VoucherDocumentContext(
     VoucherResponse voucher,
+    String clientDocument,
     String clientCity,
     String clientPhone,
     String clientEmail,

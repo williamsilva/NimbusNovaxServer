@@ -92,7 +92,7 @@
       </td>
       <td>
         <div class="info-label">Documento</div>
-        <div class="info-value" th:text="${voucher.client.document}">000.000.000-00</div>
+        <div class="info-value" th:text="${clientDocument ?: '-'}">000.000.000-00</div>
       </td>
     </tr>
     <tr>

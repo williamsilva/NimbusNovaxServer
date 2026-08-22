@@ -136,6 +136,7 @@ public class VoucherFlowService {
         .eventType("voucher_send")
         .requestedById(currentUserProvider.getCurrentUser().userId())
         .data("voucher", doc.voucher())
+        .data("clientDocument", doc.clientDocument())
         .data("clientCity", doc.clientCity())
         .data("clientPhone", doc.clientPhone())
         .data("clientEmail", doc.clientEmail())
@@ -173,6 +174,7 @@ public class VoucherFlowService {
 
     return new VoucherDocumentContext(
         response,
+        VoucherDocumentFormat.document(response.client().document()),
         resolveCity(client),
         resolvePhone(client),
         resolveEmail(client),
@@ -191,11 +193,12 @@ public class VoucherFlowService {
   }
 
   private String resolvePhone(Agent agent) {
-    return agent.getContacts().stream()
+    String phone = agent.getContacts().stream()
         .map(c -> (c.getCellphone() != null && !c.getCellphone().isBlank()) ? c.getCellphone() : c.getTelephone())
-        .filter(phone -> phone != null && !phone.isBlank())
+        .filter(p -> p != null && !p.isBlank())
         .findFirst()
         .orElse(null);
+    return VoucherDocumentFormat.phone(phone);
   }
 
   private String resolveEmail(Agent agent) {
