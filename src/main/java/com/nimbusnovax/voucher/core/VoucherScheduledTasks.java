@@ -2,6 +2,7 @@ package com.nimbusnovax.voucher.core;
 
 import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.repository.CancellationReasonRepository;
+import com.nimbusnovax.common.company.CompanySettingsService;
 import com.nimbusnovax.common.notification.mail.EmailSenderService;
 import com.nimbusnovax.common.security.NimbusAuthInternalClient;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
@@ -9,6 +10,8 @@ import com.nimbusnovax.voucher.model.Voucher;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import com.nimbusnovax.voucher.repository.VoucherRepository;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +41,7 @@ public class VoucherScheduledTasks {
   private final VoucherRepository voucherRepository;
   private final CancellationReasonRepository cancellationReasonRepository;
   private final ConfigVoucherService configVoucherService;
+  private final CompanySettingsService companySettingsService;
   private final EmailSenderService emailSenderService;
   private final NimbusAuthInternalClient nimbusAuthInternalClient;
 
@@ -56,11 +60,19 @@ public class VoucherScheduledTasks {
       return;
     }
 
+    LocalDate today = LocalDate.now(ZoneId.of(TIME_ZONE));
+    List<ExpiredVoucherWarningItem> items = vouchers.stream()
+        .map(v -> new ExpiredVoucherWarningItem(
+            v.getCode(), v.getClient().getName(), v.getPromoter().getName(), v.getVisitDate(),
+            ChronoUnit.DAYS.between(v.getVisitDate(), today)))
+        .toList();
+
     EmailSenderService.Message.MessageBuilder builder = EmailSenderService.Message.builder()
-        .subject("NOTIFICAÇÃO VOUCHERS VENCIDOS")
+        .subject("Vouchers vencidos - " + vouchers.size() + (vouchers.size() == 1 ? " voucher" : " vouchers"))
         .template("voucher/warning-voucher-expired")
         .eventType("voucher_expired_warning")
-        .data("vouchers", vouchers);
+        .data("vouchers", items)
+        .data("company", companySettingsService.getOrDefaultModel());
     recipients.forEach(builder::to);
     emailSenderService.sendThymeleaf(builder.build());
 

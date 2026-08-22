@@ -131,4 +131,31 @@ class VoucherTemplatesRenderTest {
     assertRenders("voucher/change-voucher", sampleVoucher(false, false),
         new CompanySettingsModel(null, null, null, null, null, null, null, null), List.of());
   }
+
+  @Test
+  void rendersWarningVoucherExpired_withMultipleVouchers() {
+    Context context = new Context();
+    context.setVariable("vouchers", List.of(
+        new ExpiredVoucherWarningItem("EVT1922", "Maurício Manhaes", "Ramonik Barreto", LocalDate.of(2026, 1, 16), 5L),
+        new ExpiredVoucherWarningItem("AFV1927", "William Silva", "William Silva", LocalDate.of(2026, 1, 10), 11L)));
+    context.setVariable("company", sampleCompany());
+
+    String html = templateEngine().process("voucher/warning-voucher-expired", context);
+
+    assertThat(html).isNotBlank();
+    assertThat(html).contains("EVT1922", "AFV1927", "Maurício Manhaes", "William Silva");
+  }
+
+  @Test
+  void rendersWarningVoucherExpired_singleVoucher_noCompany() {
+    Context context = new Context();
+    context.setVariable("vouchers", List.of(
+        new ExpiredVoucherWarningItem("EVT1922", "Maurício Manhaes", "Ramonik Barreto", LocalDate.of(2026, 1, 16), 5L)));
+    context.setVariable("company", new CompanySettingsModel(null, null, null, null, null, null, null, null));
+
+    String html = templateEngine().process("voucher/warning-voucher-expired", context);
+
+    assertThat(html).isNotBlank();
+    assertThat(html).contains("EVT1922");
+  }
 }
