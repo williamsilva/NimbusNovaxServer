@@ -3,12 +3,12 @@ package com.nimbusnovax.voucher.core;
 import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.repository.CancellationReasonRepository;
 import com.nimbusnovax.common.notification.mail.EmailSenderService;
+import com.nimbusnovax.common.security.NimbusAuthInternalClient;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Voucher;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import com.nimbusnovax.voucher.repository.VoucherRepository;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,8 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
  * três horários: aviso de vencidos (6h), marcar OVERDUE (4h) e marcar CALLED_OFF automaticamente
  * (4h10). O motivo de cancelamento automático é o registro "System" (generation SYSTEM, protegido
  * contra edição/exclusão na UI - ver CancellationReasonService) migrado do legado ({@code
- * WsConst.SYSTEM}). Destinatários do aviso de vencidos vêm de {@link ConfigVoucher#getNotificationEmails()}
- * (ver divergência documentada lá - este servidor não tem tabela de usuário/role local).
+ * WsConst.SYSTEM}). Destinatários do aviso de vencidos são os usuários com a permissão
+ * VOUCHER_NOTIFICATION no NimbusAuth (ver NimbusAuthInternalClient.fetchOptionsByPermission) - não
+ * mais uma lista de e-mails configurada manualmente (ConfigVoucher.notificationEmails, removido).
  */
 @Slf4j
 @Component
@@ -31,11 +32,14 @@ public class VoucherScheduledTasks {
 
   private static final String TIME_ZONE = "America/Sao_Paulo";
   private static final String SYSTEM_REASON_NAME = "System";
+  private static final String NIMBUSNOVAX_APP_KEY = "nimbusnovax";
+  private static final String VOUCHER_NOTIFICATION_PERMISSION = "VOUCHER_NOTIFICATION";
 
   private final VoucherRepository voucherRepository;
   private final CancellationReasonRepository cancellationReasonRepository;
   private final ConfigVoucherService configVoucherService;
   private final EmailSenderService emailSenderService;
+  private final NimbusAuthInternalClient nimbusAuthInternalClient;
 
   @Scheduled(cron = "0 0 6 * * *", zone = TIME_ZONE)
   @Transactional(readOnly = true)
@@ -46,10 +50,9 @@ public class VoucherScheduledTasks {
       return;
     }
 
-    ConfigVoucher config = configVoucherService.getOrCreate();
-    List<String> recipients = parseEmails(config.getNotificationEmails());
+    List<String> recipients = resolveNotificationRecipients();
     if (recipients.isEmpty()) {
-      log.warn("There are {} expired vouchers, but no notification recipients are configured.", vouchers.size());
+      log.warn("There are {} expired vouchers, but no user has the VOUCHER_NOTIFICATION permission.", vouchers.size());
       return;
     }
 
@@ -62,6 +65,22 @@ public class VoucherScheduledTasks {
     emailSenderService.sendThymeleaf(builder.build());
 
     log.info("Warning e-mail sent for {} expired vouchers.", vouchers.size());
+  }
+
+  /** Degrada pra lista vazia em qualquer falha ao consultar o NimbusAuth (ex.: indisponibilidade
+   *  temporária) - um job agendado não deve lançar exceção não tratada, só logar e pular o envio
+   *  desta execução (a próxima tentativa é amanhã de qualquer forma). */
+  private List<String> resolveNotificationRecipients() {
+    try {
+      return nimbusAuthInternalClient.fetchOptionsByPermission(NIMBUSNOVAX_APP_KEY, VOUCHER_NOTIFICATION_PERMISSION)
+          .stream()
+          .map(NimbusAuthInternalClient.UserSummary::username)
+          .filter(email -> email != null && !email.isBlank())
+          .toList();
+    } catch (Exception e) {
+      log.warn("Falha ao resolver destinatários de VOUCHER_NOTIFICATION no NimbusAuth: {}", e.getMessage());
+      return List.of();
+    }
   }
 
   @Scheduled(cron = "0 0 4 * * *", zone = TIME_ZONE)
@@ -108,12 +127,5 @@ public class VoucherScheduledTasks {
       voucher.cancel(systemReason);
       log.info("Voucher {} marked as canceled.", voucher.getCode());
     });
-  }
-
-  private List<String> parseEmails(String raw) {
-    if (raw == null || raw.isBlank()) {
-      return List.of();
-    }
-    return Arrays.stream(raw.split(",")).map(String::trim).filter(s -> !s.isBlank()).toList();
   }
 }

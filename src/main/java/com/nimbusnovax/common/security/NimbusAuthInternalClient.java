@@ -66,4 +66,23 @@ public class NimbusAuthInternalClient {
 
     return result != null ? List.of(result) : List.of();
   }
+
+  /** Usuários (do app_key informado) que têm a permissão pedida (ver GET
+   *  /internal/users/permissions no NimbusAuth) - usado por {@code VoucherScheduledTasks} pra
+   *  resolver os destinatários do aviso de vouchers vencidos a partir de quem tem
+   *  VOUCHER_NOTIFICATION, em vez de uma lista de e-mails configurada manualmente e sujeita a
+   *  ficar desincronizada do catálogo real de usuários/grupos. Não degrada silenciosamente (mesmo
+   *  critério de {@link #fetchOptionsByAppKey}) - o chamador decide como reagir a uma falha. */
+  public List<UserSummary> fetchOptionsByPermission(String appKey, String permission) {
+    UserSummary[] result = restClient.get()
+        .uri(uriBuilder -> uriBuilder.path("/internal/users/permissions")
+            .queryParam("appKey", appKey)
+            .queryParam("permission", permission)
+            .build())
+        .header("X-Internal-Secret", internalApiSecret)
+        .retrieve()
+        .body(UserSummary[].class);
+
+    return result != null ? List.of(result) : List.of();
+  }
 }

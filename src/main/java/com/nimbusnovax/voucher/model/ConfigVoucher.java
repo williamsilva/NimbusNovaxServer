@@ -44,13 +44,6 @@ public class ConfigVoucher {
   @Column(name = "email_body", columnDefinition = "text")
   private String emailBody;
 
-  /** Divergência deliberada do sistema legado: lá os destinatários do aviso de vouchers vencidos
-   *  eram os usuários com uma permissão especial (WsSecurity.ROLE_VOUCHER_NOTIFICATION) - aqui não
-   *  há tabela de usuário local (identidade vem 100% do NimbusAuth via JWT), então a lista de
-   *  e-mails fica configurada diretamente aqui (separada por vírgula). */
-  @Column(name = "notification_emails", length = 500)
-  private String notificationEmails;
-
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

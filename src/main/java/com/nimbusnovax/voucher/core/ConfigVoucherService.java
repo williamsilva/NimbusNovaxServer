@@ -39,7 +39,6 @@ public class ConfigVoucherService {
     config.setDaysToCancel(request.daysToCancel());
     config.setNumberPendingVouchers(request.numberPendingVouchers());
     config.setEmailBody(request.emailBody());
-    config.setNotificationEmails(request.notificationEmails());
     config.setUpdatedById(currentUserId());
     return toResponse(repository.save(config));
   }
@@ -82,7 +81,6 @@ public class ConfigVoucherService {
         config.getDaysToCancel(),
         config.getNumberPendingVouchers(),
         config.getEmailBody(),
-        config.getNotificationEmails(),
         config.getCreatedAt(),
         config.getUpdatedAt());
   }
