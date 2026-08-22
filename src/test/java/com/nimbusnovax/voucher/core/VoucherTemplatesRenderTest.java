@@ -88,7 +88,7 @@ class VoucherTemplatesRenderTest {
     context.setVariable("remainingValue", voucher.totalPrice().subtract(voucher.advanceValue()));
     context.setVariable("company", company);
     context.setVariable("importantInfo", importantInfo);
-    context.setVariable("emailBody", "<p>Muito obrigado pela sua visita!</p>");
+    context.setVariable("emailBody", "Muito obrigado pela sua visita!\n\nEsperamos vê-lo(a) novamente em breve.");
 
     String html = templateEngine().process(templateName, context);
 

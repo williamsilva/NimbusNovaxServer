@@ -23,7 +23,7 @@
             <p style="margin:0 0 14px 0; font-size:15px; color:#111827;">
               Olá, <b th:text="${voucher.client.name}">Cliente</b>!
             </p>
-            <div style="font-size:13px; line-height:1.6; color:#374151;" th:utext="${emailBody}">
+            <div style="font-size:13px; line-height:1.6; color:#374151; white-space:pre-line;" th:text="${emailBody}">
               Corpo da notificação de troca de voucher.
             </div>
           </td>
