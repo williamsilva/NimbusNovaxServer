@@ -42,9 +42,7 @@ import org.springframework.web.server.ResponseStatusException;
  * substituídos por inteiro a cada save. Duas divergências deliberadas do legado, ambas para sanar
  * comportamento acidental de lá (não regra de negócio intencional): (1) o PUT genérico nunca altera
  * status - só os endpoints de fluxo em {@link VoucherFlowService} fazem isso; (2) {@code
- * typePerson} é sempre copiado do cliente atual, nunca escolhido livremente no formulário. Regra
- * nova (sem equivalente no legado): um cliente não pode ter dois vouchers DEALING simultâneos -
- * ver {@link #requireNoOtherDealingVoucher}.
+ * typePerson} é sempre copiado do cliente atual, nunca escolhido livremente no formulário.
  */
 @Service
 @RequiredArgsConstructor
@@ -151,8 +149,6 @@ public class VoucherService {
     Agent promoter = findAgentOrThrow(request.promoterId());
     Agent tourGuide = request.tourGuideId() == null ? null : findAgentOrThrow(request.tourGuideId());
 
-    requireNoOtherDealingVoucher(client, null);
-
     ConfigVoucher config = configVoucherService.getOrCreate();
     long pending = repository.countByClientAndStatusIn(client.getId(), List.of(
         StatusVoucherEnum.OVERDUE.getCode(), StatusVoucherEnum.DEALING.getCode(),
@@ -192,10 +188,6 @@ public class VoucherService {
     }
 
     Agent client = findAgentOrThrow(request.clientId());
-
-    if (voucher.getStatusEnum() == StatusVoucherEnum.DEALING) {
-      requireNoOtherDealingVoucher(client, voucher.getId());
-    }
 
     voucher.setClient(client);
     voucher.setPromoter(findAgentOrThrow(request.promoterId()));
@@ -273,21 +265,6 @@ public class VoucherService {
     Integer max = repository.findMaxNumericSuffix();
     long suffix = (max == null ? 1000L : max) + 1;
     return prefix + String.valueOf(suffix);
-  }
-
-  /** Um cliente não pode ter dois vouchers em negociação (DEALING) ao mesmo tempo - regra própria
-   *  além do limite geral de "vouchers pendentes" (ConfigVoucher.numberPendingVouchers, que conta
-   *  DEALING+OVERDUE+CONFIRMED e é bem mais permissivo). {@code excludeId} é o próprio voucher
-   *  sendo editado (null na criação), pra não se autobloquear. */
-  private void requireNoOtherDealingVoucher(Agent client, UUID excludeId) {
-    long dealing = excludeId == null
-        ? repository.countByClientAndStatus(client.getId(), StatusVoucherEnum.DEALING.getCode())
-        : repository.countByClientAndStatusExcludingId(client.getId(), StatusVoucherEnum.DEALING.getCode(), excludeId);
-
-    if (dealing > 0) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, String.format(
-          "O cliente '%s' já possui um voucher em negociação.", client.getName()));
-    }
   }
 
   private Agent findAgentOrThrow(UUID id) {

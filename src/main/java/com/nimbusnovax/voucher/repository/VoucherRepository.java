@@ -23,13 +23,6 @@ public interface VoucherRepository extends JpaRepository<Voucher, UUID> {
   @Query("SELECT COUNT(v) FROM Voucher v WHERE v.client.id = :clientId AND v.status = :status")
   long countByClientAndStatus(@Param("clientId") UUID clientId, @Param("status") Integer status);
 
-  /** Mesmo critério de {@link #countByClientAndStatus}, excluindo um voucher específico da
-   *  contagem - usado ao editar um voucher já DEALING (ver VoucherService.update), pra não se
-   *  autobloquear ao trocar o cliente de um voucher que já está negociando. */
-  @Query("SELECT COUNT(v) FROM Voucher v WHERE v.client.id = :clientId AND v.status = :status AND v.id <> :excludeId")
-  long countByClientAndStatusExcludingId(
-      @Param("clientId") UUID clientId, @Param("status") Integer status, @Param("excludeId") UUID excludeId);
-
   @Query("SELECT COUNT(v) FROM Voucher v WHERE v.client.id = :clientId AND v.status IN :statuses")
   long countByClientAndStatusIn(@Param("clientId") UUID clientId, @Param("statuses") List<Integer> statuses);
 
