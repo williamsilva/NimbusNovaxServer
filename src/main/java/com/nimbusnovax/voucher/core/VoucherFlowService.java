@@ -10,6 +10,7 @@ import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Voucher;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import com.nimbusnovax.voucher.repository.VoucherRepository;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,9 +40,16 @@ public class VoucherFlowService {
   private final EmailSenderService emailSenderService;
   private final CurrentUserProvider currentUserProvider;
 
+  /** Voucher com valor zerado não pode ser confirmado - sem valor não há o que cobrar do cliente,
+   *  então a confirmação (que trava o voucher no fluxo de venda) não faz sentido de negócio. */
   public void confirm(UUID id) {
     requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
+
+    if (voucher.getTotalPrice() == null || voucher.getTotalPrice().compareTo(BigDecimal.ZERO) <= 0) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot confirm a voucher with zero value");
+    }
+
     voucher.confirm();
     voucher.setUpdatedById(currentUserId());
   }
