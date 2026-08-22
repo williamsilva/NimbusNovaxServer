@@ -1,13 +1,10 @@
 package com.nimbusnovax.voucher.core;
 
 import com.nimbusnovax.common.security.CurrentUserProvider;
-import com.nimbusnovax.common.security.NimbusAuthInternalClient;
 import com.nimbusnovax.voucher.dto.request.ConfigVoucherRequest;
 import com.nimbusnovax.voucher.dto.response.ConfigVoucherResponse;
-import com.nimbusnovax.voucher.dto.response.VoucherNotificationRecipientResponse;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.repository.ConfigVoucherRepository;
-import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,12 +21,9 @@ import org.springframework.web.server.ResponseStatusException;
 public class ConfigVoucherService {
 
   public static final String KEY = "VOUCHER_CHANGE";
-  private static final String NIMBUSNOVAX_APP_KEY = "nimbusnovax";
-  private static final String VOUCHER_NOTIFICATION_PERMISSION = "VOUCHER_NOTIFICATION";
 
   private final ConfigVoucherRepository repository;
   private final CurrentUserProvider currentUserProvider;
-  private final NimbusAuthInternalClient nimbusAuthInternalClient;
 
   @Transactional(readOnly = true)
   public ConfigVoucherResponse find() {
@@ -54,19 +48,6 @@ public class ConfigVoucherService {
    *  permissão, não é uma ação disparada diretamente pelo usuário. */
   public ConfigVoucher getOrCreate() {
     return repository.findByKey(KEY).orElseGet(this::createDefault);
-  }
-
-  /** Usuários que hoje recebem o aviso diário de vouchers vencidos (têm a permissão
-   *  VOUCHER_NOTIFICATION no NimbusAuth) - só leitura, exibida na tela de Configuração de Vouchers
-   *  pra quem administra ter visibilidade de quem está recebendo o aviso sem precisar ir até o
-   *  NimbusAuth. A permissão em si é concedida/revogada lá (grupo NOTIFICAÇÕES), não aqui. */
-  @Transactional(readOnly = true)
-  public List<VoucherNotificationRecipientResponse> notificationRecipients() {
-    requireAuthority("VOUCHER_CONFIG_CONSULT");
-    return nimbusAuthInternalClient.fetchOptionsByPermission(NIMBUSNOVAX_APP_KEY, VOUCHER_NOTIFICATION_PERMISSION)
-        .stream()
-        .map(u -> new VoucherNotificationRecipientResponse(u.name(), u.username()))
-        .toList();
   }
 
   private ConfigVoucher createDefault() {
