@@ -74,11 +74,11 @@
                 <td align="right" style="padding:6px 10px; font-size:10px; color:#1e3a8a; font-weight:bold;">Total</td>
               </tr>
               <tr th:each="item : ${voucher.tickets}">
-                <td style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;" th:text="${item.productName}">Produto</td>
-                <td align="right" style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;" th:text="${item.quantity}">0</td>
-                <td align="right" style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;"
+                <td style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;" th:text="${item.productName}">Produto</td>
+                <td align="right" style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;" th:text="${item.quantity}">0</td>
+                <td align="right" style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;"
                     th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
-                <td align="right" style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;"
+                <td align="right" style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;"
                     th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
               </tr>
             </table>
@@ -97,11 +97,11 @@
                 <td align="right" style="padding:6px 10px; font-size:10px; color:#1e3a8a; font-weight:bold;">Total</td>
               </tr>
               <tr th:each="item : ${voucher.foods}">
-                <td style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;" th:text="${item.productName}">Produto</td>
-                <td align="right" style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;" th:text="${item.quantity}">0</td>
-                <td align="right" style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;"
+                <td style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;" th:text="${item.productName}">Produto</td>
+                <td align="right" style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;" th:text="${item.quantity}">0</td>
+                <td align="right" style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;"
                     th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
-                <td align="right" style="padding:6px 10px; font-size:12px; border-top:1px solid #e2e8f0;"
+                <td align="right" style="padding:6px 10px; font-size:12px; color:#111827; border-top:1px solid #e2e8f0;"
                     th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
               </tr>
             </table>
