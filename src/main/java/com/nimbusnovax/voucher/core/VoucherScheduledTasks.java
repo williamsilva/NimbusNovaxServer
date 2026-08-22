@@ -45,8 +45,11 @@ public class VoucherScheduledTasks {
   private final EmailSenderService emailSenderService;
   private final NimbusAuthInternalClient nimbusAuthInternalClient;
 
+  /** Não é readOnly: apesar da consulta ser só leitura, o método dispara e-mail e sua auditoria
+   *  em email_log (efeito colateral de verdade) - ver EmailLogService.logSent, que precisou virar
+   *  REQUIRES_NEW justamente porque esta transação já foi readOnly no passado. */
   @Scheduled(cron = "0 0 6 * * *", zone = TIME_ZONE)
-  @Transactional(readOnly = true)
+  @Transactional
   public void warnExpiredVouchers() {
     List<Voucher> vouchers = voucherRepository.findByStatus(StatusVoucherEnum.OVERDUE.getCode());
     if (vouchers.isEmpty()) {

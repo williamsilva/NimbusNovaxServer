@@ -18,7 +18,12 @@ public class EmailLogService {
 
   private final EmailLogRepository repository;
 
-  @Transactional
+  /** REQUIRES_NEW - alguns chamadores (ex.: VoucherScheduledTasks.warnExpiredVouchers) disparam o
+   *  envio de dentro de uma transação @Transactional(readOnly = true): sem propagação própria,
+   *  este save() participa dessa transação de leitura e é descartado silenciosamente no commit
+   *  (Hibernate nem chega a fazer flush de uma sessão só-leitura) - o e-mail sai de verdade, mas a
+   *  auditoria em email_log fica muda, sem nenhum erro visível. Mesmo motivo de logError abaixo. */
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void logSent(EmailSenderService.Message message, String body) {
     repository.save(EmailLogEntity.builder()
         .eventType(message.getEventType())
