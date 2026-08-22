@@ -8,6 +8,7 @@ import com.nimbusnovax.common.security.CurrentUserProvider;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Voucher;
+import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import com.nimbusnovax.voucher.repository.VoucherRepository;
 import java.util.List;
 import java.util.UUID;
@@ -52,9 +53,18 @@ public class VoucherFlowService {
     voucher.setUpdatedById(currentUserId());
   }
 
+  /** Só é permitido trocar (marcar como acessado) um voucher já CONFIRMED - trocar a partir de
+   *  qualquer outro status não faz sentido de negócio (o cliente precisa ter confirmado a visita
+   *  antes de ser considerado "acessado"). */
   public void change(UUID id) {
     requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
+
+    if (voucher.getStatusEnum() != StatusVoucherEnum.CONFIRMED) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Only a CONFIRMED voucher can be exchanged, current status: " + voucher.getStatusEnum());
+    }
+
     voucher.change();
     voucher.setUpdatedById(currentUserId());
 
@@ -82,8 +92,7 @@ public class VoucherFlowService {
     // Voucher.canSend() no legado: bloqueia envio só quando CALLED_OFF ou OVERDUE (um voucher
     // ainda em negociação, confirmado ou trocado pode ser enviado normalmente).
     var status = voucher.getStatusEnum();
-    if (status == com.nimbusnovax.voucher.model.enums.StatusVoucherEnum.CALLED_OFF
-        || status == com.nimbusnovax.voucher.model.enums.StatusVoucherEnum.OVERDUE) {
+    if (status == StatusVoucherEnum.CALLED_OFF || status == StatusVoucherEnum.OVERDUE) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Voucher " + status + " cannot be sent");
     }
 
