@@ -228,10 +228,11 @@ public class VoucherFlowService {
 
     VoucherResponse response = voucherService.toResponse(voucher);
     EmailSenderService.Message.MessageBuilder builder = EmailSenderService.Message.builder()
-        .subject("Alteração de voucher - Nº " + voucher.getCode())
+        .subject("Obrigado pela sua visita - Voucher Nº " + voucher.getCode())
         .template("voucher/change-voucher")
         .eventType("voucher_change")
         .data("voucher", response)
+        .data("company", companySettingsService.getOrDefaultModel())
         .data("emailBody", config.getEmailBody() == null ? "" : config.getEmailBody());
 
     recipients.forEach(builder::to);

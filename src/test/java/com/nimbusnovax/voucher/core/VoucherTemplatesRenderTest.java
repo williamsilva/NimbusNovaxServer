@@ -88,6 +88,7 @@ class VoucherTemplatesRenderTest {
     context.setVariable("remainingValue", voucher.totalPrice().subtract(voucher.advanceValue()));
     context.setVariable("company", company);
     context.setVariable("importantInfo", importantInfo);
+    context.setVariable("emailBody", "<p>Muito obrigado pela sua visita!</p>");
 
     String html = templateEngine().process(templateName, context);
 
@@ -117,6 +118,17 @@ class VoucherTemplatesRenderTest {
   @Test
   void rendersVoucherPdf_ticketsOnly_noCompanyNoImportantInfo() {
     assertRenders("voucher/voucher-pdf", sampleVoucher(false, false),
+        new CompanySettingsModel(null, null, null, null, null, null, null, null), List.of());
+  }
+
+  @Test
+  void rendersChangeVoucherEmail_withCompany() {
+    assertRenders("voucher/change-voucher", sampleVoucher(false, false), sampleCompany(), List.of());
+  }
+
+  @Test
+  void rendersChangeVoucherEmail_noCompany() {
+    assertRenders("voucher/change-voucher", sampleVoucher(false, false),
         new CompanySettingsModel(null, null, null, null, null, null, null, null), List.of());
   }
 }
