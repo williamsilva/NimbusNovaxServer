@@ -1,15 +1,11 @@
 package com.nimbusnovax.common.notification.mail;
 
-import com.nimbusnovax.common.security.NimbusAuthAdminClient;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawEmailLog;
 import com.nimbusnovax.common.web.FilterSupport;
 import com.nimbusnovax.common.web.PageResponse;
 import com.nimbusnovax.common.web.SearchRequest;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmailLogService {
 
   private final EmailLogRepository repository;
-  private final NimbusAuthAdminClient nimbusAuthAdminClient;
 
   @Transactional
   public void logSent(EmailSenderService.Message message, String body) {
@@ -56,19 +51,13 @@ public class EmailLogService {
    * Listagem paginada/filtrada/ordenada (tela Configurações &gt; Auditoria de E-mail, no padrão
    * CardSync de listagem) - mesmo estilo de {@code AddendumApprovalService.search}: busca tudo em
    * memória (volume esperado pequeno/médio pra este app, mesma premissa das demais listagens) e
-   * filtra/ordena/pagina depois. Mescla os e-mails de negócio próprios (email_log, esta tabela)
-   * com os de convite/reset de senha do NimbusAuth (ver NimbusAuthAdminClient.searchEmailLogs) -
-   * o usuário pediu pra essa tela também refletir os eventos de ciclo de vida de usuário, não só
-   * os de negócio (aditivo/parcela/chamado).
-   *
-   * @param accessToken token de acesso do usuário logado, repassado ao NimbusAuth (a busca lá
-   *     exige a authority AUDIT_MAIL_CONSULT no próprio token, não um secret compartilhado - ver
-   *     migration V20260819_01 no NimbusAuth).
+   * filtra/ordena/pagina depois. Só os e-mails de negócio próprios (email_log, esta tabela) - não
+   * mescla mais com os de convite/reset de senha do NimbusAuth (removido: essa tela é a auditoria
+   * do NimbusNovax, e-mail de outro app só confundia quem está analisando os próprios envios).
    */
   @Transactional(readOnly = true)
-  public PageResponse<EmailLogModel> search(SearchRequest request, String accessToken) {
-    List<EmailLogModel> all = new ArrayList<>(repository.findAll().stream().map(this::toModel).toList());
-    nimbusAuthAdminClient.searchEmailLogs(accessToken).stream().map(this::toModel).forEach(all::add);
+  public PageResponse<EmailLogModel> search(SearchRequest request) {
+    List<EmailLogModel> all = repository.findAll().stream().map(this::toModel).toList();
     List<EmailLogModel> sorted = sortLogs(filterLogs(all, request), request);
 
     int page = request.page() == null ? 0 : Math.max(0, request.page());
@@ -135,25 +124,6 @@ public class EmailLogService {
     return new EmailLogModel(
         e.getId(), e.getEventType(), e.getRecipients(), e.getSubject(), e.getTemplate(),
         e.getBody(), e.getStatus(), e.getErrorMessage(), e.getRequestedById(), e.getSentAt());
-  }
-
-  /** eventType/status do NimbusAuth chegam em maiúsculo (nome cru do enum Java, ex.: "PASSWORD_RESET",
-   *  "SENT") - convertidos pro mesmo formato usado no eventType/status próprios deste serviço
-   *  (minúsculo/snake_case, ver email-log-event-type.enum.ts no frontend). Sem "requestedById"
-   *  (não exposto na resposta de lá) - degrada pra null, a tela já trata isso como "—". "body" já
-   *  vem preenchido desde V20260819_02 no NimbusAuth (nulo só em registros anteriores a essa
-   *  migration, que não têm como ser reconstruídos retroativamente). */
-  private EmailLogModel toModel(RawEmailLog e) {
-    EmailLogStatus status;
-    try {
-      status = EmailLogStatus.valueOf(e.status().toUpperCase(Locale.ROOT));
-    } catch (Exception ex) {
-      status = EmailLogStatus.FAILED;
-    }
-
-    return new EmailLogModel(
-        e.id(), e.eventType().toLowerCase(Locale.ROOT), e.recipient(), e.subject(), e.template(),
-        e.body(), status, e.errorMessage(), null, e.sentAt());
   }
 
   private String joinRecipients(EmailSenderService.Message message) {

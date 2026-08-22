@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.security.NimbusAuthAdminClient;
 import com.nimbusnovax.common.web.PageResponse;
 import com.nimbusnovax.common.web.SearchRequest;
 import java.time.Instant;
@@ -14,22 +13,13 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 class EmailLogServiceTest {
 
   private final EmailLogRepository repository = mock(EmailLogRepository.class);
-  private final NimbusAuthAdminClient nimbusAuthAdminClient = mock(NimbusAuthAdminClient.class);
-  private final EmailLogService service = new EmailLogService(repository, nimbusAuthAdminClient);
-
-  @BeforeEach
-  void setUp() {
-    // Nada de convite/reset do NimbusAuth por padrão - testes que exercitam essa mescla
-    // sobrescrevem este stub geral (Mockito usa o mais recente que casar).
-    when(nimbusAuthAdminClient.searchEmailLogs(any())).thenReturn(List.of());
-  }
+  private final EmailLogService service = new EmailLogService(repository);
 
   @Test
   void logSentJoinsAllRecipientsAndStoresBody() {
@@ -102,7 +92,7 @@ class EmailLogServiceTest {
     SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null,
         Map.of("status", List.of("FAILED")));
 
-    PageResponse<EmailLogModel> page = service.search(request, "token");
+    PageResponse<EmailLogModel> page = service.search(request);
 
     assertThat(page._embedded().content()).hasSize(1);
     assertThat(page._embedded().content().get(0).recipients()).isEqualTo("b@example.com");
@@ -119,31 +109,10 @@ class EmailLogServiceTest {
 
     SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null, Map.of());
 
-    PageResponse<EmailLogModel> page = service.search(request, "token");
+    PageResponse<EmailLogModel> page = service.search(request);
 
     assertThat(page._embedded().content()).extracting(EmailLogModel::subject)
         .containsExactly("Mais novo", "Mais antigo");
-  }
-
-  @Test
-  void searchMergesInviteAndPasswordResetEmailsFromNimbusAuth() {
-    when(repository.findAll()).thenReturn(List.of());
-    when(nimbusAuthAdminClient.searchEmailLogs("token")).thenReturn(List.of(
-        new NimbusAuthAdminClient.RawEmailLog(
-            java.util.UUID.randomUUID(), "SENT", "PASSWORD_RESET", "Redefinição de senha",
-            "mail/reset-senha-mail.html", "user@acquamania.com.br", null, "<html>corpo</html>",
-            Instant.parse("2026-01-01T00:00:00Z"))));
-
-    SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null, Map.of());
-
-    PageResponse<EmailLogModel> page = service.search(request, "token");
-
-    assertThat(page._embedded().content()).hasSize(1);
-    EmailLogModel merged = page._embedded().content().get(0);
-    assertThat(merged.eventType()).isEqualTo("password_reset");
-    assertThat(merged.status()).isEqualTo(EmailLogStatus.SENT);
-    assertThat(merged.recipients()).isEqualTo("user@acquamania.com.br");
-    assertThat(merged.body()).isEqualTo("<html>corpo</html>");
   }
 
   private EmailLogEntity entityOf(String recipients, String subject, EmailLogStatus status, String eventType) {

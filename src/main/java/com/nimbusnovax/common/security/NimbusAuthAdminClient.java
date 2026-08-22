@@ -179,31 +179,6 @@ public class NimbusAuthAdminClient {
     }
   }
 
-  // ------------------------- Auditoria de e-mail -------------------------
-
-  /** POST /api/v1/email-logs - convite/reset de senha do próprio NimbusAuth, filtrado a
-   *  recipientAppKey=nimbusnovax (só quem pertence hoje a algum grupo do NimbusNovax, ver
-   *  EmailLogSpecs.recipientBelongsToApp no NimbusAuth). Degrada silenciosamente (lista vazia) em
-   *  qualquer falha - mesmo espírito de NimbusAuthInternalClient.fetchUsers: isso só complementa a
-   *  Auditoria de E-mail (ver EmailLogService.search), nunca deve derrubar a tela inteira só
-   *  porque o NimbusAuth está fora do ar ou a permissão AUDIT_MAIL_CONSULT ainda não foi concedida
-   *  ao token do usuário (precisa de novo login depois da migration que a seeda). */
-  public List<RawEmailLog> searchEmailLogs(String accessToken) {
-    try {
-      HalPage<RawEmailLog> page = restClient.post()
-          .uri("/api/v1/email-logs")
-          .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-          .contentType(MediaType.APPLICATION_JSON)
-          .body(new EmailLogSearchRequest(0, PAGE_SIZE, new EmailLogSearchFilter(APP_KEY)))
-          .retrieve()
-          .body(new org.springframework.core.ParameterizedTypeReference<HalPage<RawEmailLog>>() {});
-      return page == null ? List.of() : page.items();
-    } catch (Exception e) {
-      log.warn("Falha ao buscar e-mails de convite/reset de senha no NimbusAuth: {}", e.getMessage());
-      return List.of();
-    }
-  }
-
   public RawGroup getGroup(String accessToken, UUID id) {
     try {
       return restClient.get()
@@ -337,30 +312,11 @@ public class NimbusAuthAdminClient {
 
   public record RawUserInput(String userName, String name, String document, List<UUID> groupIds) {}
 
-  /** Espelha com.nimbus.auth.bff.controller.v1.representation.model.EmailLogModel do NimbusAuth -
-   *  status/eventType chegam como o nome cru do enum (ex.: "SENT", "PASSWORD_RESET"), mapeados
-   *  pra minúsculo/snake_case em EmailLogService pra bater com o padrão já usado no eventType do
-   *  próprio email_log do NimbusNovaxServer (ver email-log-event-type.enum.ts no frontend). */
-  public record RawEmailLog(
-      UUID id,
-      String status,
-      String eventType,
-      String subject,
-      String template,
-      String recipient,
-      String errorMessage,
-      String body,
-      Instant sentAt) {}
-
   private record SearchRequest(int page, int size) {}
 
   private record GroupsSearchFilter(String appKey) {}
 
   private record GroupsSearchRequest(int page, int size, GroupsSearchFilter advanced) {}
-
-  private record EmailLogSearchFilter(String recipientAppKey) {}
-
-  private record EmailLogSearchRequest(int page, int size, EmailLogSearchFilter advanced) {}
 
   /**
    * PagedModel do Spring HATEOAS serializa como {"_embedded": {"content": [...]}, "page": {...}}.
