@@ -1,7 +1,6 @@
 package com.nimbusnovax.voucher.core;
 
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
-import com.nimbusnovax.voucher.dto.response.VoucherResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.StringReader;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -18,8 +17,9 @@ import org.xml.sax.InputSource;
  * Gera o PDF do voucher a partir do template Thymeleaf {@code templates/voucher/voucher-pdf.html}
  * (HTML -> PDF via openhtmltopdf). O sistema legado (Novax antigo) usava JasperReports com um
  * template .jrxml compilado - HTML->PDF foi escolhido aqui por ser bem mais simples de manter e
- * evoluir sem exigir um template binário separado; o layout replica as mesmas informações
- * (cliente/promotor/data de visita/itens/total), sem tentar imitar pixel a pixel o antigo.
+ * evoluir sem exigir um template binário separado. O layout replica o voucher impresso do legado
+ * (cabeçalho da empresa, dados do cliente/promotor, itens, total, informações importantes) - ver
+ * {@link VoucherDocumentContext}.
  */
 @Service
 @RequiredArgsConstructor
@@ -27,9 +27,15 @@ public class VoucherPdfService {
 
   private final TemplateEngine templateEngine;
 
-  public byte[] renderPdf(VoucherResponse voucher) {
+  byte[] renderPdf(VoucherDocumentContext doc) {
     Context context = new Context();
-    context.setVariable("voucher", voucher);
+    context.setVariable("voucher", doc.voucher());
+    context.setVariable("clientCity", doc.clientCity());
+    context.setVariable("clientPhone", doc.clientPhone());
+    context.setVariable("clientEmail", doc.clientEmail());
+    context.setVariable("remainingValue", doc.remainingValue());
+    context.setVariable("company", doc.company());
+    context.setVariable("importantInfo", doc.importantInfo());
     String html = templateEngine.process("voucher/voucher-pdf", context);
 
     try {

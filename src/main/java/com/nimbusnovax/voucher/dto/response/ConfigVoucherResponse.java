@@ -10,6 +10,7 @@ public record ConfigVoucherResponse(
     Integer daysToCancel,
     Integer numberPendingVouchers,
     String emailBody,
+    String importantInfo,
     Instant createdAt,
     Instant updatedAt) {
 }

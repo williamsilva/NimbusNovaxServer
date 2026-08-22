@@ -44,6 +44,11 @@ public class ConfigVoucher {
   @Column(name = "email_body", columnDefinition = "text")
   private String emailBody;
 
+  /** Um aviso por linha (ex.: "É proibida a entrada de alimentos..."), exibido no rodapé do
+   *  e-mail/PDF de voucher - ver VoucherFlowService.buildDocumentContext. */
+  @Column(name = "important_info", columnDefinition = "text")
+  private String importantInfo;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

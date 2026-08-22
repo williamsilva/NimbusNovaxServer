@@ -8,5 +8,6 @@ public record ConfigVoucherRequest(
     @NotNull @Min(1) Integer daysToExpire,
     @NotNull @Min(1) Integer daysToCancel,
     @NotNull @Min(1) Integer numberPendingVouchers,
-    String emailBody) {
+    String emailBody,
+    String importantInfo) {
 }

@@ -1,8 +1,11 @@
 package com.nimbusnovax.voucher.core;
 
+import com.nimbusnovax.administracao.model.Agent;
+import com.nimbusnovax.administracao.model.AgentAddress;
 import com.nimbusnovax.administracao.model.AgentContact;
 import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.repository.CancellationReasonRepository;
+import com.nimbusnovax.common.company.CompanySettingsService;
 import com.nimbusnovax.common.notification.mail.EmailSenderService;
 import com.nimbusnovax.common.security.CurrentUserProvider;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;
@@ -11,6 +14,7 @@ import com.nimbusnovax.voucher.model.Voucher;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import com.nimbusnovax.voucher.repository.VoucherRepository;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +40,7 @@ public class VoucherFlowService {
   private final CancellationReasonRepository cancellationReasonRepository;
   private final VoucherService voucherService;
   private final ConfigVoucherService configVoucherService;
+  private final CompanySettingsService companySettingsService;
   private final VoucherPdfService pdfService;
   private final EmailSenderService emailSenderService;
   private final CurrentUserProvider currentUserProvider;
@@ -121,8 +126,8 @@ public class VoucherFlowService {
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.BAD_REQUEST, "Complete o cadastro do promotor - contato inválido."));
 
-    VoucherResponse response = voucherService.toResponse(voucher);
-    byte[] pdf = pdfService.renderPdf(response);
+    VoucherDocumentContext doc = buildDocumentContext(voucher);
+    byte[] pdf = pdfService.renderPdf(doc);
 
     EmailSenderService.Message.MessageBuilder builder = EmailSenderService.Message.builder()
         .replyTo(replyTo)
@@ -130,7 +135,13 @@ public class VoucherFlowService {
         .template("voucher/send-voucher")
         .eventType("voucher_send")
         .requestedById(currentUserProvider.getCurrentUser().userId())
-        .data("voucher", response)
+        .data("voucher", doc.voucher())
+        .data("clientCity", doc.clientCity())
+        .data("clientPhone", doc.clientPhone())
+        .data("clientEmail", doc.clientEmail())
+        .data("remainingValue", doc.remainingValue())
+        .data("company", doc.company())
+        .data("importantInfo", doc.importantInfo())
         .attachment(EmailSenderService.Attachment.builder()
             .filename(voucher.getCode() + ".pdf")
             .resource(new ByteArrayResource(pdf))
@@ -144,7 +155,62 @@ public class VoucherFlowService {
   public byte[] renderPdf(UUID id) {
     requireAuthority("Authenticated");
     Voucher voucher = getOrThrow(id);
-    return pdfService.renderPdf(voucherService.toResponse(voucher));
+    return pdfService.renderPdf(buildDocumentContext(voucher));
+  }
+
+  /** Monta tudo que o e-mail/PDF de voucher precisa além do {@link VoucherResponse} básico -
+   *  cidade/telefone/e-mail do cliente (não fazem parte de AgentRefResponse pra não gerar N+1 na
+   *  listagem de vouchers, que reusa o mesmo toResponse), o valor restante a pagar, os dados da
+   *  empresa e os avisos de "informações importantes" configurados na tela de Voucher. Chamado
+   *  pra um único voucher por vez (envio de e-mail/visualização de PDF), então o custo extra de
+   *  resolver endereço/contato do cliente aqui não tem o mesmo problema de N+1 da listagem. */
+  private VoucherDocumentContext buildDocumentContext(Voucher voucher) {
+    VoucherResponse response = voucherService.toResponse(voucher);
+    Agent client = voucher.getClient();
+
+    BigDecimal total = response.totalPrice() == null ? BigDecimal.ZERO : response.totalPrice();
+    BigDecimal advance = response.advanceValue() == null ? BigDecimal.ZERO : response.advanceValue();
+
+    return new VoucherDocumentContext(
+        response,
+        resolveCity(client),
+        resolvePhone(client),
+        resolveEmail(client),
+        total.subtract(advance),
+        companySettingsService.getOrDefaultModel(),
+        parseLines(configVoucherService.getOrCreate().getImportantInfo()));
+  }
+
+  private String resolveCity(Agent agent) {
+    return agent.getAddresses().stream()
+        .map(AgentAddress::getCity)
+        .filter(city -> city != null)
+        .findFirst()
+        .map(city -> city.getName() + "/" + city.getState().getUf())
+        .orElse(null);
+  }
+
+  private String resolvePhone(Agent agent) {
+    return agent.getContacts().stream()
+        .map(c -> (c.getCellphone() != null && !c.getCellphone().isBlank()) ? c.getCellphone() : c.getTelephone())
+        .filter(phone -> phone != null && !phone.isBlank())
+        .findFirst()
+        .orElse(null);
+  }
+
+  private String resolveEmail(Agent agent) {
+    return agent.getContacts().stream()
+        .map(AgentContact::getEmail)
+        .filter(email -> email != null && !email.isBlank())
+        .findFirst()
+        .orElse(null);
+  }
+
+  private List<String> parseLines(String raw) {
+    if (raw == null || raw.isBlank()) {
+      return List.of();
+    }
+    return Arrays.stream(raw.split("\n")).map(String::trim).filter(s -> !s.isBlank()).toList();
   }
 
   private void sendChangeNotification(Voucher voucher, ConfigVoucher config) {

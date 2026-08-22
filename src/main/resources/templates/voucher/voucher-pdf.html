@@ -2,64 +2,193 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
   <style>
-    body { font-family: Arial, sans-serif; font-size: 12px; color: #222; }
-    .header { text-align: center; padding-bottom: 12px; border-bottom: 2px solid #0d9ff0; }
-    .header h1 { margin: 0; color: #0d9ff0; font-size: 20px; }
-    .box { margin-top: 16px; }
-    .box table { width: 100%; border-collapse: collapse; }
-    .box td { padding: 4px 6px; vertical-align: top; }
-    .label { color: #777; font-size: 10px; text-transform: uppercase; }
-    table.items { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    table.items th, table.items td { border: 1px solid #ccc; padding: 4px 6px; font-size: 11px; }
-    table.items th { background: #eaeaea; text-align: left; }
-    .total { text-align: right; font-size: 14px; margin-top: 10px; }
+    * { box-sizing: border-box; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #1f2937; margin: 0; }
+
+    .company { border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 14px; }
+    .company .name { font-size: 17px; font-weight: bold; color: #1e3a8a; }
+    .company .line { font-size: 11px; color: #4b5563; margin-top: 2px; }
+
+    .title-row { width: 100%; margin-bottom: 14px; }
+    .title-row .voucher-title { font-size: 18px; font-weight: bold; color: #2563eb; }
+    .title-row .voucher-code { font-size: 18px; font-weight: bold; }
+    .title-row .issued-at { font-size: 10px; color: #6b7280; text-align: right; }
+
+    .info-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+    .info-table td { vertical-align: top; padding: 3px 8px 3px 0; width: 50%; }
+    .info-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.03em; color: #6b7280; }
+    .info-value { font-size: 12px; font-weight: bold; color: #111827; }
+
+    .section-title {
+      font-size: 12px; font-weight: bold; color: #ffffff; background: #2563eb;
+      padding: 5px 8px; margin-top: 10px;
+    }
+
+    table.items { width: 100%; border-collapse: collapse; }
+    table.items th {
+      background: #eff6ff; color: #1e3a8a; text-align: left; font-size: 10px;
+      padding: 6px 8px; border-bottom: 2px solid #bfdbfe;
+    }
+    table.items td { padding: 5px 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
+    table.items tr.even td { background: #f9fafb; }
+    table.items td.num, table.items th.num { text-align: right; }
+    table.items tr.total-row td {
+      font-weight: bold; background: #eff6ff; border-top: 2px solid #bfdbfe; border-bottom: none;
+    }
+
+    .payment-table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    .payment-table td {
+      width: 33.33%; padding: 10px; text-align: center; border: 1px solid #e5e7eb;
+    }
+    .payment-table .payment-label { font-size: 9px; text-transform: uppercase; color: #6b7280; }
+    .payment-table .payment-value { font-size: 15px; font-weight: bold; margin-top: 3px; }
+    .payment-table .total .payment-value { color: #1e3a8a; }
+    .payment-table .remaining .payment-value { color: #b45309; }
+
+    .important { margin-top: 16px; padding: 10px 12px; background: #fffbeb; border: 1px solid #fde68a; }
+    .important .important-title { font-size: 10px; font-weight: bold; color: #92400e; text-transform: uppercase; margin-bottom: 4px; }
+    .important ul { margin: 0; padding-left: 16px; }
+    .important li { font-size: 10px; color: #78350f; margin-bottom: 2px; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>VOUCHER</h1>
-    <div th:text="'Nº ' + ${voucher.code}">Nº CODE</div>
+
+  <div class="company">
+    <div class="name" th:text="${company.name ?: 'NimbusNovax'}">NOME DA EMPRESA</div>
+    <div class="line" th:if="${company.addressLine}"
+         th:text="${company.addressLine + (company.city != null ? (' - ' + company.city + '/' + company.state) : '')}">
+      Endereço - Cidade/UF
+    </div>
+    <div class="line">
+      <span th:if="${company.postalCode}" th:text="'CEP: ' + ${company.postalCode}">CEP: 00000-000</span>
+      <span th:if="${company.postalCode != null and company.phone != null}"> - </span>
+      <span th:if="${company.phone}" th:text="'Telefone: ' + ${company.phone}">Telefone: (00) 0000-0000</span>
+    </div>
+    <div class="line" th:if="${company.document}" th:text="'CNPJ: ' + ${company.document}">CNPJ: 00.000.000/0000-00</div>
   </div>
 
-  <div class="box">
-    <table>
-      <tr>
-        <td><span class="label">Cliente</span><br/><span th:text="${voucher.client.name}">Cliente</span></td>
-        <td><span class="label">Promotor</span><br/><span th:text="${voucher.promoter.name}">Promotor</span></td>
-        <td><span class="label">Data da Visita</span><br/>
-          <span th:text="${#temporals.format(voucher.visitDate, 'dd/MM/yyyy')}">dd/mm/aaaa</span></td>
-      </tr>
+  <table class="title-row">
+    <tr>
+      <td><span class="voucher-title">Voucher - </span><span class="voucher-code" th:text="${voucher.code}">CODE</span></td>
+      <td class="issued-at" th:text="${#temporals.format(voucher.createdAt, 'dd/MM/yyyy HH:mm')}">dd/mm/aaaa hh:mm</td>
+    </tr>
+  </table>
+
+  <table class="info-table">
+    <tr>
+      <td>
+        <div class="info-label">Promotor</div>
+        <div class="info-value" th:text="${voucher.promoter.name}">Promotor</div>
+      </td>
+      <td>
+        <div class="info-label">Cliente</div>
+        <div class="info-value" th:text="${voucher.client.name}">Cliente</div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div class="info-label">Data da Visita</div>
+        <div class="info-value" th:text="${#temporals.format(voucher.visitDate, 'dd/MM/yyyy')}">dd/mm/aaaa</div>
+      </td>
+      <td>
+        <div class="info-label">Documento</div>
+        <div class="info-value" th:text="${voucher.client.document}">000.000.000-00</div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div class="info-label">E-mail</div>
+        <div class="info-value" th:text="${clientEmail ?: '-'}">email@dominio.com</div>
+      </td>
+      <td>
+        <div class="info-label">Cidade</div>
+        <div class="info-value" th:text="${clientCity ?: '-'}">Cidade/UF</div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div class="info-label">Nº de Visitas</div>
+        <div class="info-value" th:text="${voucher.numberOfVisit} + 'ª Visita'">1ª Visita</div>
+      </td>
+      <td>
+        <div class="info-label">Telefone</div>
+        <div class="info-value" th:text="${clientPhone ?: '-'}">(00) 00000-0000</div>
+      </td>
+    </tr>
+    <tr th:if="${voucher.tourGuide}">
+      <td>
+        <div class="info-label">Guia</div>
+        <div class="info-value" th:text="${voucher.tourGuide.name}">Guia</div>
+      </td>
+      <td></td>
+    </tr>
+  </table>
+
+  <div th:if="${!voucher.tickets.isEmpty()}">
+    <div class="section-title">Ingressos</div>
+    <table class="items">
+      <thead>
+        <tr><th>Produto</th><th class="num">Quantidade</th><th class="num">Valor Unitário</th><th class="num">Valor Total</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="item, it : ${voucher.tickets}" th:classappend="${it.odd} ? 'even' : ''">
+          <td th:text="${item.productName}">Produto</td>
+          <td class="num" th:text="${item.quantity}">0</td>
+          <td class="num" th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+          <td class="num" th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3">Total Ingressos</td>
+          <td class="num" th:text="${'R$ ' + #numbers.formatDecimal(voucher.totalPriceTickets, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+        </tr>
+      </tbody>
     </table>
   </div>
 
-  <table class="items" th:if="${!voucher.tickets.isEmpty()}">
-    <thead>
-      <tr><th>Ingresso</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr>
-    </thead>
-    <tbody>
-      <tr th:each="item : ${voucher.tickets}">
-        <td th:text="${item.productName}">Produto</td>
-        <td th:text="${item.quantity}">0</td>
-        <td th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 2)}">R$ 0,00</td>
-        <td th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 2)}">R$ 0,00</td>
-      </tr>
-    </tbody>
+  <div th:if="${!voucher.foods.isEmpty()}">
+    <div class="section-title">Alimentação</div>
+    <table class="items">
+      <thead>
+        <tr><th>Produto</th><th class="num">Quantidade</th><th class="num">Valor Unitário</th><th class="num">Valor Total</th></tr>
+      </thead>
+      <tbody>
+        <tr th:each="item, it : ${voucher.foods}" th:classappend="${it.odd} ? 'even' : ''">
+          <td th:text="${item.productName}">Produto</td>
+          <td class="num" th:text="${item.quantity}">0</td>
+          <td class="num" th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+          <td class="num" th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+        </tr>
+        <tr class="total-row">
+          <td colspan="3">Total Alimentação</td>
+          <td class="num" th:text="${'R$ ' + #numbers.formatDecimal(voucher.totalPriceFoods, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <table class="payment-table">
+    <tr>
+      <td class="total">
+        <div class="payment-label">Total</div>
+        <div class="payment-value" th:text="${'R$ ' + #numbers.formatDecimal(voucher.totalPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
+      </td>
+      <td>
+        <div class="payment-label">Depósito Antecipado</div>
+        <div class="payment-value" th:text="${'R$ ' + #numbers.formatDecimal(voucher.advanceValue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
+      </td>
+      <td class="remaining">
+        <div class="payment-label">Pagamento Restante</div>
+        <div class="payment-value" th:text="${'R$ ' + #numbers.formatDecimal(remainingValue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
+      </td>
+    </tr>
   </table>
 
-  <table class="items" th:if="${!voucher.foods.isEmpty()}">
-    <thead>
-      <tr><th>Alimentação</th><th>Qtd.</th><th>Unitário</th><th>Total</th></tr>
-    </thead>
-    <tbody>
-      <tr th:each="item : ${voucher.foods}">
-        <td th:text="${item.productName}">Produto</td>
-        <td th:text="${item.quantity}">0</td>
-        <td th:text="${'R$ ' + #numbers.formatDecimal(item.unitPrice, 1, 2)}">R$ 0,00</td>
-        <td th:text="${'R$ ' + #numbers.formatDecimal(item.totalPrice, 1, 2)}">R$ 0,00</td>
-      </tr>
-    </tbody>
-  </table>
+  <div class="important" th:if="${!importantInfo.isEmpty()}">
+    <div class="important-title">Informações importantes</div>
+    <ul>
+      <li th:each="line : ${importantInfo}" th:text="${line}">Aviso</li>
+    </ul>
+  </div>
 
-  <div class="total" th:text="'Total: R$ ' + ${#numbers.formatDecimal(voucher.totalPrice, 1, 2)}">Total: R$ 0,00</div>
 </body>
 </html>
