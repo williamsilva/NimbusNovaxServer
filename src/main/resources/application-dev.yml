@@ -62,9 +62,9 @@ nimbusnovax:
       jwk-set-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/oauth2/jwks
 
     web:
-      spa-base-url: ${NIMBUSNOVAX_SPA_BASE_URL:http://localhost:4202}
+      spa-base-url: ${NIMBUSNOVAX_SPA_BASE_URL:http://localhost:4203}
       allowed-origins:
-        - ${CORS_ALLOWED_ORIGINS:http://localhost:4202}
+        - ${CORS_ALLOWED_ORIGINS:http://localhost:4203}
 
   nimbusauth:
     # Mesma base do jwk-set-uri acima (nimbusnovax.security.resource-server.jwk-set-uri), exposta
