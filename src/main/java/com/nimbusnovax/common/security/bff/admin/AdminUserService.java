@@ -1,6 +1,5 @@
 package com.nimbusnovax.common.security.bff.admin;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroupOption;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUser;
@@ -15,6 +14,10 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -39,13 +42,11 @@ public class AdminUserService {
 
   private final NimbusAuthAdminClient client;
   private final NimbusAuthInternalClient internalClient;
-  private final CurrentUserProvider currentUserProvider;
 
   /** Só usuários com pelo menos um grupo do NimbusNovax - usuários são globais no NimbusAuth (sem
    *  app_key própio), então a busca crua traz todo mundo (inclusive de outros apps Nimbus, ex.:
    *  Cardsync); decisão explícita do usuário (2026-08-05): não expor esse diretório completo aqui. */
   public List<AdminUserResponse> list(String accessToken) {
-    requireAuthority("USERS_CONSULT");
     return client.searchAllUsers(accessToken).stream()
         .filter(this::belongsToNimbusNovax)
         .map(this::toResponse)
@@ -53,8 +54,6 @@ public class AdminUserService {
   }
 
   public AdminUserResponse get(String accessToken, UUID id) {
-    requireAuthority("USERS_CONSULT");
-
     RawUser user = client.getUser(accessToken, id);
     if (!belongsToNimbusNovax(user)) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND);
@@ -80,11 +79,12 @@ public class AdminUserService {
 
   /**
    * Sem paginação/filtro real no NimbusAuth pra esse recorte (ver NimbusAuthAdminClient) - busca
-   * tudo (volume esperado é pequeno, mesma premissa do client) e filtra/ordena/pagina em memória.
+   * tudo (volume esperado é pequeno, mesma premissa do client) e filtra/ordena/pagina em memória;
+   * embrulhado numa {@link PageImpl} só pra reaproveitar o mesmo envelope {@code PagedModel} das
+   * demais telas (ver {@link BffAdminUsersController#search}) - sem Specification/JPA possível
+   * aqui, o dado é remoto (NimbusAuth via HTTP).
    */
-  public AdminPageResponse<AdminUserResponse> search(String accessToken, AdminSearchRequest request) {
-    requireAuthority("USERS_CONSULT");
-
+  public Page<AdminUserResponse> search(String accessToken, AdminSearchRequest request) {
     List<AdminUserResponse> all = client.searchAllUsers(accessToken).stream()
         .filter(this::belongsToNimbusNovax)
         .map(this::toResponse)
@@ -97,7 +97,8 @@ public class AdminUserService {
     int from = Math.min(page * size, sorted.size());
     int to = Math.min(from + size, sorted.size());
 
-    return AdminPageResponse.of(sorted.subList(from, to), page, size, sorted.size());
+    Pageable pageable = PageRequest.of(page, size);
+    return new PageImpl<>(sorted.subList(from, to), pageable, sorted.size());
   }
 
   private List<AdminUserResponse> filterUsers(List<AdminUserResponse> items, AdminSearchRequest request) {
@@ -180,8 +181,6 @@ public class AdminUserService {
    * cadastro não deve sobrescrever a identidade de um usuário que já existe em outro app).
    */
   public AdminUserResponse create(String accessToken, AdminUserRequest request) {
-    requireAuthority("USERS_CREATE");
-
     RawUser existing = client.searchAllUsers(accessToken).stream()
         .filter(u -> u.userName() != null && u.userName().equalsIgnoreCase(request.userName()))
         .findFirst()
@@ -216,8 +215,6 @@ public class AdminUserService {
    * estado atual, preserva os grupos de fora do NimbusNovax intactos, funde com a nova seleção.
    */
   public AdminUserResponse update(String accessToken, UUID id, AdminUserRequest request) {
-    requireAuthority("USERS_CHANGE");
-
     RawUser current = client.getUser(accessToken, id);
     Set<UUID> finalGroupIds = new LinkedHashSet<>();
     if (current.groups() != null) {
@@ -234,27 +231,22 @@ public class AdminUserService {
   }
 
   public void activate(String accessToken, UUID id) {
-    requireAuthority("USERS_ACTIVE_OR_INACTIVE");
     client.activateUser(accessToken, id);
   }
 
   public void deactivate(String accessToken, UUID id) {
-    requireAuthority("USERS_ACTIVE_OR_INACTIVE");
     client.deactivateUser(accessToken, id);
   }
 
   public void resendInvite(String accessToken, UUID id) {
-    requireAuthority("USERS_RESEND_INVITE");
     client.resendInvite(accessToken, id);
   }
 
   public void activateBulk(String accessToken, List<UUID> ids) {
-    requireAuthority("USERS_ACTIVE_OR_INACTIVE");
     client.activateUsersBulk(accessToken, ids);
   }
 
   public void deactivateBulk(String accessToken, List<UUID> ids) {
-    requireAuthority("USERS_ACTIVE_OR_INACTIVE");
     client.deactivateUsersBulk(accessToken, ids);
   }
 
@@ -279,11 +271,4 @@ public class AdminUserService {
         u.createdAt(), u.lastLoginAt(), u.blockedUntil(), u.passwordExpiresAt(), createdBy, nimbusNovaxGroups);
   }
 
-  /** @param permission nome cru (ex.: "USERS_CONSULT") - authorities já vêm prefixadas "PERM_"
-   *  (ver bffOidcUserService em SecurityConfig). */
-  private void requireAuthority(String permission) {
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
-    }
-  }
 }

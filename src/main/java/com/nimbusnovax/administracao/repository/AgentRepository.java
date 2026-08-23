@@ -4,9 +4,10 @@ import com.nimbusnovax.administracao.model.Agent;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-public interface AgentRepository extends JpaRepository<Agent, UUID> {
+public interface AgentRepository extends JpaRepository<Agent, UUID>, JpaSpecificationExecutor<Agent> {
 
   Optional<Agent> findByName(String name);
 

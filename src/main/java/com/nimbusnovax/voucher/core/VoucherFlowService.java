@@ -48,7 +48,6 @@ public class VoucherFlowService {
   /** Voucher com valor zerado não pode ser confirmado - sem valor não há o que cobrar do cliente,
    *  então a confirmação (que trava o voucher no fluxo de venda) não faz sentido de negócio. */
   public void confirm(UUID id) {
-    requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
 
     if (voucher.getTotalPrice() == null || voucher.getTotalPrice().compareTo(BigDecimal.ZERO) <= 0) {
@@ -60,7 +59,6 @@ public class VoucherFlowService {
   }
 
   public void notConfirm(UUID id) {
-    requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
     voucher.notConfirm();
     voucher.setUpdatedById(currentUserId());
@@ -70,7 +68,6 @@ public class VoucherFlowService {
    *  qualquer outro status não faz sentido de negócio (o cliente precisa ter confirmado a visita
    *  antes de ser considerado "acessado"). */
   public void change(UUID id) {
-    requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
 
     if (voucher.getStatusEnum() != StatusVoucherEnum.CONFIRMED) {
@@ -88,7 +85,6 @@ public class VoucherFlowService {
   }
 
   public void cancel(UUID id, UUID cancellationReasonId) {
-    requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
     CancellationReason reason = cancellationReasonRepository.findById(cancellationReasonId)
         .orElseThrow(() -> new ResponseStatusException(
@@ -99,7 +95,6 @@ public class VoucherFlowService {
   }
 
   public void sendVoucherEmail(UUID id) {
-    requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
 
     // Voucher.canSend() no legado: bloqueia envio só quando CALLED_OFF ou OVERDUE (um voucher
@@ -154,7 +149,6 @@ public class VoucherFlowService {
   }
 
   public byte[] renderPdf(UUID id) {
-    requireAuthority("Authenticated");
     Voucher voucher = getOrThrow(id);
     return pdfService.renderPdf(buildDocumentContext(voucher));
   }
@@ -252,15 +246,4 @@ public class VoucherFlowService {
     }
   }
 
-  /** "Authenticated" só exige uma sessão válida (mesmo nível de {@code CheckSecurity.Authenticated}
-   *  no legado para /to-view e /send-email) - sem exigir uma authority PERM_* específica. */
-  private void requireAuthority(String permission) {
-    if ("Authenticated".equals(permission)) {
-      currentUserProvider.requireUserId();
-      return;
-    }
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
-    }
-  }
 }

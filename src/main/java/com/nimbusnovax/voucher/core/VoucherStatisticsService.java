@@ -1,6 +1,5 @@
 package com.nimbusnovax.voucher.core;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
 import com.nimbusnovax.voucher.dto.response.VoucherStatisticsResponse.ByStatus;
 import com.nimbusnovax.voucher.dto.response.VoucherStatisticsResponse.Totals;
 import com.nimbusnovax.voucher.dto.response.VoucherStatisticsResponse.TopClient;
@@ -16,10 +15,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Estatísticas do dashboard de voucher, mesmas 3 consultas do {@code dashboard-voucher} do
@@ -36,10 +33,8 @@ public class VoucherStatisticsService {
   private static final int TOP_CLIENTS_LIMIT = 10;
 
   private final VoucherRepository repository;
-  private final CurrentUserProvider currentUserProvider;
 
   public List<ByStatus> byStatus(LocalDate firstPeriod, LocalDate finalPeriod) {
-    requireAuthority();
     Map<StatusVoucherEnum, Long> byStatus = filtered(firstPeriod, finalPeriod).stream()
         .collect(Collectors.groupingBy(Voucher::getStatusEnum, Collectors.counting()));
 
@@ -50,7 +45,6 @@ public class VoucherStatisticsService {
   }
 
   public Totals totals(LocalDate firstPeriod, LocalDate finalPeriod) {
-    requireAuthority();
     List<Voucher> vouchers = filtered(firstPeriod, finalPeriod);
 
     long clientCount = vouchers.stream().map(v -> v.getClient().getId()).distinct().count();
@@ -64,7 +58,6 @@ public class VoucherStatisticsService {
   }
 
   public List<TopClient> topClients(LocalDate firstPeriod, LocalDate finalPeriod) {
-    requireAuthority();
     List<Voucher> vouchers = filtered(firstPeriod, finalPeriod);
 
     Map<UUID, List<Voucher>> byClient = vouchers.stream()
@@ -99,11 +92,5 @@ public class VoucherStatisticsService {
       return false;
     }
     return finalPeriod == null || !createdDate.isAfter(finalPeriod);
-  }
-
-  private void requireAuthority() {
-    if (!currentUserProvider.hasAuthority("PERM_VOUCHERS_CONSULT")) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing VOUCHERS_CONSULT authority");
-    }
   }
 }

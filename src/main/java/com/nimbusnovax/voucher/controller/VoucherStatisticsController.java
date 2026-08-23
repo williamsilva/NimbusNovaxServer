@@ -1,5 +1,6 @@
 package com.nimbusnovax.voucher.controller;
 
+import com.nimbusnovax.common.security.CheckSecurity;
 import com.nimbusnovax.voucher.core.VoucherStatisticsService;
 import com.nimbusnovax.voucher.dto.response.VoucherStatisticsResponse.ByStatus;
 import com.nimbusnovax.voucher.dto.response.VoucherStatisticsResponse.TopClient;
@@ -21,6 +22,7 @@ public class VoucherStatisticsController {
   private final VoucherStatisticsService service;
 
   @GetMapping("/by-status")
+  @CheckSecurity.Voucher.CanConsult
   public List<ByStatus> byStatus(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate firstPeriod,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate finalPeriod) {
@@ -28,6 +30,7 @@ public class VoucherStatisticsController {
   }
 
   @GetMapping("/totals")
+  @CheckSecurity.Voucher.CanConsult
   public Totals totals(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate firstPeriod,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate finalPeriod) {
@@ -35,6 +38,7 @@ public class VoucherStatisticsController {
   }
 
   @GetMapping("/top-clients")
+  @CheckSecurity.Voucher.CanConsult
   public List<TopClient> topClients(
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate firstPeriod,
       @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate finalPeriod) {

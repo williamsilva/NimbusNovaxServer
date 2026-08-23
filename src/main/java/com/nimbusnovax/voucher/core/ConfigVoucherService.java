@@ -7,10 +7,8 @@ import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.repository.ConfigVoucherRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 /** Configuração de voucher (dias para expirar/cancelar, número de vouchers pendentes permitido,
  *  notificação por e-mail) - linha única identificada pela chave {@link #KEY}, mesmo papel de
@@ -27,12 +25,10 @@ public class ConfigVoucherService {
 
   @Transactional(readOnly = true)
   public ConfigVoucherResponse find() {
-    requireAuthority("VOUCHER_CONFIG_CONSULT");
     return toResponse(getOrCreate());
   }
 
   public ConfigVoucherResponse update(ConfigVoucherRequest request) {
-    requireAuthority("VOUCHER_CONFIG_CHANGE");
     ConfigVoucher config = getOrCreate();
     config.setSenderMail(request.senderMail() == null ? Boolean.TRUE : request.senderMail());
     config.setDaysToExpire(request.daysToExpire());
@@ -65,12 +61,6 @@ public class ConfigVoucherService {
       return UUID.fromString(currentUserProvider.requireUserId());
     } catch (IllegalStateException | IllegalArgumentException e) {
       return null;
-    }
-  }
-
-  private void requireAuthority(String permission) {
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
     }
   }
 

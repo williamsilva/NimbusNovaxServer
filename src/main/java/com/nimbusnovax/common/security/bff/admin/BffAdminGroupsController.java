@@ -1,12 +1,16 @@
 package com.nimbusnovax.common.security.bff.admin;
 
 import com.nimbusnovax.common.security.BffAccessTokenService;
+import com.nimbusnovax.common.security.CheckSecurity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,32 +29,41 @@ public class BffAdminGroupsController {
 
   private final AdminGroupService service;
   private final BffAccessTokenService accessTokenService;
+  private final AdminGroupSummaryModelAssembler modelAssembler;
+  private final PagedResourcesAssembler<AdminGroupSummaryResponse> pagedResourcesAssembler;
 
   @GetMapping("/bff/v1/groups")
+  @CheckSecurity.Group.CanConsult
   public List<AdminGroupSummaryResponse> list(Authentication auth, HttpServletRequest request, HttpServletResponse response) {
     return service.list(accessTokenService.getValidAccessToken(auth, request, response));
   }
 
   @GetMapping("/bff/v1/groups/options")
+  @CheckSecurity.Group.CanConsult
   public List<AdminGroupOptionResponse> options(
       Authentication auth, HttpServletRequest request, HttpServletResponse response) {
     return service.options(accessTokenService.getValidAccessToken(auth, request, response));
   }
 
   @PostMapping("/bff/v1/groups/search")
-  public AdminPageResponse<AdminGroupSummaryResponse> search(
+  @CheckSecurity.Group.CanConsult
+  public PagedModel<AdminGroupSummaryModel> search(
       @RequestBody AdminSearchRequest body,
       Authentication auth, HttpServletRequest request, HttpServletResponse response) {
-    return service.search(accessTokenService.getValidAccessToken(auth, request, response), body);
+    Page<AdminGroupSummaryResponse> page =
+        service.search(accessTokenService.getValidAccessToken(auth, request, response), body);
+    return pagedResourcesAssembler.toModel(page, modelAssembler);
   }
 
   @GetMapping("/bff/v1/groups/{id}")
+  @CheckSecurity.Group.CanConsult
   public AdminGroupResponse get(@PathVariable UUID id, Authentication auth, HttpServletRequest request, HttpServletResponse response) {
     return service.get(accessTokenService.getValidAccessToken(auth, request, response), id);
   }
 
   @PostMapping("/bff/v1/groups")
   @ResponseStatus(HttpStatus.CREATED)
+  @CheckSecurity.Group.CanCreate
   public AdminGroupResponse create(
       @Valid @RequestBody AdminGroupRequest body,
       Authentication auth, HttpServletRequest request, HttpServletResponse response) {
@@ -58,6 +71,7 @@ public class BffAdminGroupsController {
   }
 
   @PutMapping("/bff/v1/groups/{id}")
+  @CheckSecurity.Group.CanChange
   public AdminGroupResponse update(
       @PathVariable UUID id,
       @Valid @RequestBody AdminGroupRequest body,
@@ -67,11 +81,13 @@ public class BffAdminGroupsController {
 
   @DeleteMapping("/bff/v1/groups/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
+  @CheckSecurity.Group.CanDelete
   public void delete(@PathVariable UUID id, Authentication auth, HttpServletRequest request, HttpServletResponse response) {
     service.delete(accessTokenService.getValidAccessToken(auth, request, response), id);
   }
 
   @PutMapping("/bff/v1/groups/{id}/permissions")
+  @CheckSecurity.Group.CanManagePermission
   public AdminGroupResponse updatePermissions(
       @PathVariable UUID id,
       @Valid @RequestBody AdminGroupPermissionsRequest body,
@@ -80,6 +96,7 @@ public class BffAdminGroupsController {
   }
 
   @PutMapping("/bff/v1/groups/{id}/users")
+  @CheckSecurity.Group.CanManageUser
   public AdminGroupResponse updateUsers(
       @PathVariable UUID id,
       @Valid @RequestBody AdminGroupUsersRequest body,
@@ -88,6 +105,7 @@ public class BffAdminGroupsController {
   }
 
   @GetMapping({"/bff/v1/permissions", "/bff/v1/permissions/options"})
+  @CheckSecurity.Group.CanConsult
   public List<AdminPermissionOptionResponse> listPermissionOptions(
       Authentication auth, HttpServletRequest request, HttpServletResponse response) {
     return service.listPermissionOptions(accessTokenService.getValidAccessToken(auth, request, response));

@@ -1,15 +1,18 @@
 package com.nimbusnovax.common.notification.mail;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
-import com.nimbusnovax.common.web.PageResponse;
+import com.nimbusnovax.common.security.CheckSecurity;
+import com.nimbusnovax.common.web.PageableMapper;
 import com.nimbusnovax.common.web.SearchRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Menu "Configurações &gt; Auditoria de E-mail" - sessão/cookie (chain /bff/**, não JWT), mesmo
@@ -24,20 +27,18 @@ import org.springframework.web.server.ResponseStatusException;
 @RequestMapping("/bff/v1/email/logs")
 public class BffEmailLogController {
 
+  /** Sem sort explícito -> mais recentes primeiro, mesmo default do filtro em memória anterior. */
+  private static final Sort DEFAULT_SORT = Sort.by(Sort.Direction.DESC, "sentAt");
+
   private final EmailLogService emailLogService;
-  private final CurrentUserProvider currentUserProvider;
+  private final EmailLogModelAssembler modelAssembler;
+  private final PagedResourcesAssembler<EmailLogEntity> pagedResourcesAssembler;
 
   @PostMapping("/search")
-  public PageResponse<EmailLogModel> search(@RequestBody SearchRequest request) {
-    requireAuthority("EMAIL_LOG_CONSULT");
-    return emailLogService.search(request);
-  }
-
-  /** @param permission nome cru (ex.: "EMAIL_LOG_CONSULT") - authorities já vêm prefixadas
-   *  "PERM_" (ver bffOidcUserService em SecurityConfig). */
-  private void requireAuthority(String permission) {
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
-    }
+  @CheckSecurity.EmailLog.CanConsult
+  public PagedModel<EmailLogModel> search(@RequestBody SearchRequest request) {
+    Pageable pageable = PageableMapper.toPageable(request.page(), request.size(), request.sort(), DEFAULT_SORT);
+    Page<EmailLogEntity> page = emailLogService.search(request, pageable);
+    return pagedResourcesAssembler.toModel(page, modelAssembler);
   }
 }

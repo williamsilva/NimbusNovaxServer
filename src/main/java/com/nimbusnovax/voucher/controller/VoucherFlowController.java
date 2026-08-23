@@ -1,5 +1,6 @@
 package com.nimbusnovax.voucher.controller;
 
+import com.nimbusnovax.common.security.CheckSecurity;
 import com.nimbusnovax.voucher.core.VoucherFlowService;
 import com.nimbusnovax.voucher.dto.request.VoucherCancellationRequest;
 import jakarta.validation.Valid;
@@ -23,31 +24,37 @@ public class VoucherFlowController {
   private final VoucherFlowService flowService;
 
   @PutMapping("/confirm")
+  @CheckSecurity.Voucher.CanChange
   public void confirm(@PathVariable UUID id) {
     flowService.confirm(id);
   }
 
   @PutMapping("/not-confirm")
+  @CheckSecurity.Voucher.CanChange
   public void notConfirm(@PathVariable UUID id) {
     flowService.notConfirm(id);
   }
 
   @PutMapping("/change")
+  @CheckSecurity.Voucher.CanChange
   public void change(@PathVariable UUID id) {
     flowService.change(id);
   }
 
   @PutMapping("/cancel")
+  @CheckSecurity.Voucher.CanChange
   public void cancel(@PathVariable UUID id, @Valid @RequestBody VoucherCancellationRequest request) {
     flowService.cancel(id, request.cancellationReasonId());
   }
 
   @PutMapping("/send-email")
+  @CheckSecurity.Voucher.CanChange
   public void sendEmail(@PathVariable UUID id) {
     flowService.sendVoucherEmail(id);
   }
 
   @GetMapping("/to-view")
+  @CheckSecurity.Authenticated
   public ResponseEntity<byte[]> toView(@PathVariable UUID id) {
     byte[] pdf = flowService.renderPdf(id);
     HttpHeaders headers = new HttpHeaders();

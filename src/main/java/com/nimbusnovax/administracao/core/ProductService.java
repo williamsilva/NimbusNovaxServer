@@ -8,17 +8,16 @@ import com.nimbusnovax.administracao.model.enums.StatusEnum;
 import com.nimbusnovax.administracao.model.enums.TypeProductEnum;
 import com.nimbusnovax.administracao.repository.ProductRepository;
 import com.nimbusnovax.common.security.CurrentUserProvider;
-import com.nimbusnovax.common.web.FilterSupport;
-import com.nimbusnovax.common.web.PageResponse;
 import com.nimbusnovax.common.web.SearchRequest;
 import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,70 +31,20 @@ import org.springframework.web.server.ResponseStatusException;
 public class ProductService {
 
   private final ProductRepository repository;
+  private final ProductSpecs productSpecs;
   private final CurrentUserProvider currentUserProvider;
 
   @Transactional(readOnly = true)
   public ProductResponse findById(UUID id) {
-    requireAuthority("PRODUTOS_CONSULT");
     return toResponse(getOrThrow(id));
   }
 
+  /** Filtro/ordenação/paginação reais no banco via {@link ProductSpecs} (Specification) - ver
+   *  {@link com.nimbusnovax.voucher.core.VoucherSpecs} para o padrão. */
   @Transactional(readOnly = true)
-  public PageResponse<ProductResponse> search(SearchRequest request) {
-    requireAuthority("PRODUTOS_CONSULT");
-    List<ProductResponse> all = repository.findAll().stream().map(this::toResponse).toList();
-    List<ProductResponse> sorted = sortProducts(filterProducts(all, request), request);
-
-    int page = request.page() == null ? 0 : Math.max(0, request.page());
-    int size = request.size() == null || request.size() <= 0 ? 20 : request.size();
-    int from = Math.min(page * size, sorted.size());
-    int to = Math.min(from + size, sorted.size());
-
-    return PageResponse.of(sorted.subList(from, to), page, size, sorted.size());
-  }
-
-  private List<ProductResponse> filterProducts(List<ProductResponse> items, SearchRequest request) {
-    Map<String, Object> tableFilters = request.tableFilters();
-    Map<String, Object> advanced = request.advanced();
-
-    String name = FilterSupport.textFilter(tableFilters, advanced, "name", "name");
-    List<String> typeValues = FilterSupport.listFilter(tableFilters, advanced, "typeProduct", "typeProduct");
-    List<String> statusValues = FilterSupport.listFilter(tableFilters, advanced, "status", "status");
-    String global = request.globalFilter();
-
-    return items.stream()
-        .filter(p -> FilterSupport.containsIgnoreCase(p.name(), name))
-        .filter(p -> typeValues.isEmpty() || typeValues.contains(p.typeProduct().name()))
-        .filter(p -> statusValues.isEmpty() || (p.status() != null && statusValues.contains(p.status().name())))
-        .filter(p -> global == null || global.isBlank() || FilterSupport.containsIgnoreCase(p.name(), global))
-        .toList();
-  }
-
-  private List<ProductResponse> sortProducts(List<ProductResponse> items, SearchRequest request) {
-    SearchRequest.SortItem sortItem =
-        (request.sort() == null || request.sort().isEmpty()) ? null : request.sort().get(0);
-    String field = sortItem != null && sortItem.field() != null ? sortItem.field() : "name";
-    boolean desc = sortItem != null && sortItem.order() != null && sortItem.order() < 0;
-
-    Comparator<ProductResponse> comparator = switch (field) {
-      case "amount" -> Comparator.comparing(ProductResponse::amount);
-      case "createdAt" -> Comparator.comparing(p -> orEpoch(p.createdAt()));
-      default -> Comparator.comparing(p -> orEmpty(p.name()), String.CASE_INSENSITIVE_ORDER);
-    };
-
-    if (desc) {
-      comparator = comparator.reversed();
-    }
-
-    return items.stream().sorted(comparator).toList();
-  }
-
-  private static String orEmpty(String value) {
-    return value == null ? "" : value;
-  }
-
-  private static Instant orEpoch(Instant value) {
-    return value == null ? Instant.EPOCH : value;
+  public Page<Product> search(SearchRequest request, Pageable pageable) {
+    Specification<Product> spec = productSpecs.fromRequest(request);
+    return repository.findAll(spec, pageable);
   }
 
   /** Item leve para os selects de item do formulário de Voucher (ingressos/alimentação) - só
@@ -103,7 +52,6 @@ public class ProductService {
    *  voucher novo). */
   @Transactional(readOnly = true)
   public List<ProductOptionResponse> findOptions(TypeProductEnum typeProduct) {
-    requireAuthority("PRODUTOS_CONSULT");
     return repository.findAll().stream()
         .filter(p -> p.getTypeProductEnum() == typeProduct && p.getStatusEnum() == StatusEnum.ACTIVE)
         .map(p -> new ProductOptionResponse(p.getId(), p.getName(), p.getAmount()))
@@ -112,7 +60,6 @@ public class ProductService {
   }
 
   public ProductResponse create(ProductRequest request) {
-    requireAuthority("PRODUTOS_CREATE");
     Product product = new Product();
     applyRequest(product, request);
     UUID userId = currentUserId();
@@ -122,7 +69,6 @@ public class ProductService {
   }
 
   public ProductResponse update(UUID id, ProductRequest request) {
-    requireAuthority("PRODUTOS_CHANGE");
     Product product = getOrThrow(id);
     applyRequest(product, request);
     product.setUpdatedById(currentUserId());
@@ -130,7 +76,6 @@ public class ProductService {
   }
 
   public void activate(UUID id) {
-    requireAuthority("PRODUTOS_CHANGE");
     Product product = getOrThrow(id);
     if (product.getStatusEnum() == StatusEnum.ACTIVE) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Product is already active");
@@ -139,7 +84,6 @@ public class ProductService {
   }
 
   public void deactivate(UUID id) {
-    requireAuthority("PRODUTOS_CHANGE");
     Product product = getOrThrow(id);
     if (product.getStatusEnum() == StatusEnum.INACTIVE) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, "Product is already inactive");
@@ -148,7 +92,6 @@ public class ProductService {
   }
 
   public void delete(UUID id) {
-    requireAuthority("PRODUTOS_DELETE");
     Product product = getOrThrow(id);
     try {
       repository.delete(product);
@@ -179,12 +122,6 @@ public class ProductService {
       return UUID.fromString(currentUserProvider.requireUserId());
     } catch (IllegalStateException | IllegalArgumentException e) {
       return null;
-    }
-  }
-
-  private void requireAuthority(String permission) {
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
     }
   }
 

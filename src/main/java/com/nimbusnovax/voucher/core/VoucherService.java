@@ -5,8 +5,6 @@ import com.nimbusnovax.administracao.model.Product;
 import com.nimbusnovax.administracao.repository.AgentRepository;
 import com.nimbusnovax.administracao.repository.ProductRepository;
 import com.nimbusnovax.common.security.CurrentUserProvider;
-import com.nimbusnovax.common.web.FilterSupport;
-import com.nimbusnovax.common.web.PageResponse;
 import com.nimbusnovax.common.web.SearchRequest;
 import com.nimbusnovax.voucher.dto.request.VoucherRequest;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;
@@ -18,16 +16,14 @@ import com.nimbusnovax.voucher.model.VoucherItem;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import com.nimbusnovax.voucher.repository.VoucherRepository;
 import java.security.SecureRandom;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,14 +48,8 @@ public class VoucherService {
   private static final SecureRandom RANDOM = new SecureRandom();
   private static final String CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-  /** Status escondidos da listagem por padrão (voucher já "resolvido") - a tela só os mostra
-   *  quando o usuário aplica um filtro de status explícito, mesmo comportamento do sistema
-   *  legado (VoucherConsultComponent nunca aplicava esse filtro; era a query padrão do backend). */
-  private static final Set<Integer> HIDDEN_BY_DEFAULT = Set.of(
-      StatusVoucherEnum.EXCHANGED.getCode(), StatusVoucherEnum.CALLED_OFF.getCode(),
-      StatusVoucherEnum.NOT_CLOSED.getCode());
-
   private final VoucherRepository repository;
+  private final VoucherSpecs voucherSpecs;
   private final AgentRepository agentRepository;
   private final ProductRepository productRepository;
   private final ConfigVoucherService configVoucherService;
@@ -67,84 +57,19 @@ public class VoucherService {
 
   @Transactional(readOnly = true)
   public VoucherResponse findById(UUID id) {
-    requireAuthority("VOUCHERS_CONSULT");
     return toResponse(getOrThrow(id));
   }
 
+  /** Filtro/ordenação/paginação reais no banco via {@link VoucherSpecs} (Specification) - ver
+   *  ali o motivo de continuar reaproveitando {@code FilterSupport} pra extrair os valores em vez
+   *  de introduzir um DTO de filtro tipado novo. */
   @Transactional(readOnly = true)
-  public PageResponse<VoucherResponse> search(SearchRequest request) {
-    requireAuthority("VOUCHERS_CONSULT");
-    List<VoucherResponse> all = repository.findAll().stream().map(this::toResponse).toList();
-    List<VoucherResponse> sorted = sortVouchers(filterVouchers(all, request), request);
-
-    int page = request.page() == null ? 0 : Math.max(0, request.page());
-    int size = request.size() == null || request.size() <= 0 ? 20 : request.size();
-    int from = Math.min(page * size, sorted.size());
-    int to = Math.min(from + size, sorted.size());
-
-    return PageResponse.of(sorted.subList(from, to), page, size, sorted.size());
-  }
-
-  private List<VoucherResponse> filterVouchers(List<VoucherResponse> items, SearchRequest request) {
-    Map<String, Object> tableFilters = request.tableFilters();
-    Map<String, Object> advanced = request.advanced();
-
-    String code = FilterSupport.textFilter(tableFilters, advanced, "voucher", "voucher");
-    String clientName = FilterSupport.textFilter(tableFilters, advanced, "client", "client");
-    List<String> promoterIds = FilterSupport.listFilter(tableFilters, advanced, "promoter", "promoter");
-    List<String> statusValues = FilterSupport.listFilter(tableFilters, advanced, "status", "status");
-    LocalDate[] visitRange = FilterSupport.periodLocalDateRange(
-        tableFilters, advanced, "visitDate", "periodVisitDate", "visitDate");
-    String global = request.globalFilter();
-
-    boolean hasStatusFilter = !statusValues.isEmpty();
-
-    return items.stream()
-        .filter(v -> FilterSupport.containsIgnoreCase(v.code(), code))
-        .filter(v -> v.client() == null || FilterSupport.containsIgnoreCase(v.client().name(), clientName))
-        .filter(v -> promoterIds.isEmpty()
-            || (v.promoter() != null && promoterIds.contains(String.valueOf(v.promoter().id()))))
-        .filter(v -> hasStatusFilter
-            ? statusValues.contains(v.status().name())
-            : !HIDDEN_BY_DEFAULT.contains(StatusVoucherEnum.toCode(v.status())))
-        .filter(v -> FilterSupport.withinRange(v.visitDate(), visitRange))
-        .filter(v -> global == null || global.isBlank()
-            || FilterSupport.containsIgnoreCase(v.code(), global)
-            || (v.client() != null && FilterSupport.containsIgnoreCase(v.client().name(), global)))
-        .toList();
-  }
-
-  private List<VoucherResponse> sortVouchers(List<VoucherResponse> items, SearchRequest request) {
-    SearchRequest.SortItem sortItem =
-        (request.sort() == null || request.sort().isEmpty()) ? null : request.sort().get(0);
-    String field = sortItem != null && sortItem.field() != null ? sortItem.field() : "createdAt";
-    boolean desc = sortItem == null || sortItem.order() == null || sortItem.order() < 0;
-
-    Comparator<VoucherResponse> comparator = switch (field) {
-      case "voucher", "code" -> Comparator.comparing(v -> orEmpty(v.code()), String.CASE_INSENSITIVE_ORDER);
-      case "visitDate" -> Comparator.comparing(v -> v.visitDate() == null ? LocalDate.MIN : v.visitDate());
-      case "totalPrice" -> Comparator.comparing(VoucherResponse::totalPrice);
-      default -> Comparator.comparing(v -> orEpoch(v.createdAt()));
-    };
-
-    if (desc) {
-      comparator = comparator.reversed();
-    }
-
-    return items.stream().sorted(comparator).toList();
-  }
-
-  private static String orEmpty(String value) {
-    return value == null ? "" : value;
-  }
-
-  private static Instant orEpoch(Instant value) {
-    return value == null ? Instant.EPOCH : value;
+  public Page<Voucher> search(SearchRequest request, Pageable pageable) {
+    Specification<Voucher> spec = voucherSpecs.fromRequest(request);
+    return repository.findAll(spec, pageable);
   }
 
   public VoucherResponse create(VoucherRequest request) {
-    requireAuthority("VOUCHERS_CREATE");
-
     Agent client = findAgentOrThrow(request.clientId());
     Agent promoter = findAgentOrThrow(request.promoterId());
     Agent tourGuide = request.tourGuideId() == null ? null : findAgentOrThrow(request.tourGuideId());
@@ -179,7 +104,6 @@ public class VoucherService {
   }
 
   public VoucherResponse update(UUID id, VoucherRequest request) {
-    requireAuthority("VOUCHERS_CHANGE");
     Voucher voucher = getOrThrow(id);
 
     if (!voucher.canBeModified()) {
@@ -203,7 +127,6 @@ public class VoucherService {
   /** Delete físico só permitido em DEALING - mesma regra do sistema legado
    *  (VoucherConsultComponent.canCancel só habilitava o botão nesse status). */
   public void delete(UUID id) {
-    requireAuthority("VOUCHERS_DELETE");
     Voucher voucher = getOrThrow(id);
 
     if (voucher.getStatusEnum() != StatusVoucherEnum.DEALING) {
@@ -277,12 +200,6 @@ public class VoucherService {
       return UUID.fromString(currentUserProvider.requireUserId());
     } catch (IllegalStateException | IllegalArgumentException e) {
       return null;
-    }
-  }
-
-  private void requireAuthority(String permission) {
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
     }
   }
 

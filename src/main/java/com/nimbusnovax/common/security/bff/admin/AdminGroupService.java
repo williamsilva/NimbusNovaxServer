@@ -1,6 +1,5 @@
 package com.nimbusnovax.common.security.bff.admin;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroup;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroupInput;
@@ -10,9 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Administração de grupos (menu Segurança) - só grupos/permissões do NimbusNovax
@@ -25,66 +26,53 @@ import org.springframework.web.server.ResponseStatusException;
 public class AdminGroupService {
 
   private final NimbusAuthAdminClient client;
-  private final CurrentUserProvider currentUserProvider;
 
   /** Listagem completa (com contadores/data/autor, ver AdminGroupSummaryResponse) - usa
    *  /groups/search em vez de /groups/options porque este último não traz esses campos. */
   public List<AdminGroupSummaryResponse> list(String accessToken) {
-    requireAuthority("GROUPS_CONSULT");
     return client.searchAllGroups(accessToken).stream().map(this::toSummary).toList();
   }
 
   public AdminGroupResponse get(String accessToken, UUID id) {
-    requireAuthority("GROUPS_CONSULT");
     return toResponse(client.getGroup(accessToken, id));
   }
 
   public AdminGroupResponse create(String accessToken, AdminGroupRequest request) {
-    requireAuthority("GROUPS_CREATE");
     return toResponse(client.createGroup(accessToken, new RawGroupInput(request.name(), request.description())));
   }
 
   public AdminGroupResponse update(String accessToken, UUID id, AdminGroupRequest request) {
-    requireAuthority("GROUPS_CHANGE");
     return toResponse(client.updateGroup(accessToken, id, new RawGroupInput(request.name(), request.description())));
   }
 
   public void delete(String accessToken, UUID id) {
-    requireAuthority("GROUPS_DELETE");
     client.deleteGroup(accessToken, id);
   }
 
   public AdminGroupResponse updatePermissions(String accessToken, UUID id, AdminGroupPermissionsRequest request) {
-    requireAuthority("GROUPS_MANAGEMENT_PERMISSION");
     return toResponse(client.updateGroupPermissions(accessToken, id, request.permissionIds()));
   }
 
   public AdminGroupResponse updateUsers(String accessToken, UUID id, AdminGroupUsersRequest request) {
-    requireAuthority("GROUPS_MANAGEMENT_USER");
     return toResponse(client.updateGroupUsers(accessToken, id, request.userIds()));
   }
 
   public List<AdminPermissionOptionResponse> listPermissionOptions(String accessToken) {
-    requireAuthority("GROUPS_CONSULT");
     return client.listPermissionOptions(accessToken).stream()
         .map(p -> new AdminPermissionOptionResponse(p.id(), p.name(), p.description()))
         .toList();
   }
 
   public List<AdminGroupOptionResponse> options(String accessToken) {
-    requireAuthority("GROUPS_CONSULT");
     return client.listGroupOptions(accessToken).stream()
         .map(g -> new AdminGroupOptionResponse(g.id(), g.name(), g.description()))
         .toList();
   }
 
-  /**
-   * Sem paginação/filtro real no NimbusAuth pra esse recorte (ver NimbusAuthAdminClient) - busca
-   * tudo (volume esperado é pequeno, mesma premissa do client) e filtra/ordena/pagina em memória.
-   */
-  public AdminPageResponse<AdminGroupSummaryResponse> search(String accessToken, AdminSearchRequest request) {
-    requireAuthority("GROUPS_CONSULT");
-
+  /** Sem paginação/filtro real no NimbusAuth pra esse recorte - ver
+   *  {@link com.nimbusnovax.common.security.bff.admin.AdminUserService#search} para o padrão
+   *  (mesmo motivo de embrulhar numa {@link PageImpl}). */
+  public Page<AdminGroupSummaryResponse> search(String accessToken, AdminSearchRequest request) {
     List<AdminGroupSummaryResponse> all =
         client.searchAllGroups(accessToken).stream().map(this::toSummary).toList();
 
@@ -95,7 +83,8 @@ public class AdminGroupService {
     int from = Math.min(page * size, sorted.size());
     int to = Math.min(from + size, sorted.size());
 
-    return AdminPageResponse.of(sorted.subList(from, to), page, size, sorted.size());
+    Pageable pageable = PageRequest.of(page, size);
+    return new PageImpl<>(sorted.subList(from, to), pageable, sorted.size());
   }
 
   private List<AdminGroupSummaryResponse> filterGroups(
@@ -180,10 +169,4 @@ public class AdminGroupService {
         g.id(), g.name(), g.description(), g.usersCount(), g.permissionsCount(), g.createdAt(), permissions, users);
   }
 
-  /** @param permission nome cru (ex.: "GROUPS_CONSULT") - authorities já vêm prefixadas "PERM_". */
-  private void requireAuthority(String permission) {
-    if (!currentUserProvider.hasAuthority("PERM_" + permission)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Missing " + permission + " authority");
-    }
-  }
 }
