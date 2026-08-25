@@ -1,7 +1,6 @@
 package com.nimbusnovax.common.security.bff.admin;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -9,7 +8,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroupOption;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUser;
@@ -18,15 +16,17 @@ import com.nimbusnovax.common.security.NimbusAuthInternalClient;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Cobre a checagem de autorização (defesa em profundidade, mesmo padrão de SupplierServiceTest) e,
- * principalmente, a regra de "usuário é global no NimbusAuth" - update() precisa preservar grupos
- * de outros apps Nimbus (ex.: Cardsync) que o usuário já tenha, já que PUT /api/v1/users/{id} faz
- * replace total da lista de grupos.
+ * Sem checagem de permissão aqui - AdminUserService não tem mais autorização manual
+ * (CurrentUserProvider foi removido do construtor), ela migrou pra {@code @CheckSecurity} nos
+ * métodos de {@code BffAdminUsersController} (defesa aplicada via proxy AOP do Spring Security,
+ * não observável instanciando o service direto com "new" como este teste faz - cobrir a rejeição
+ * em si exigiria um teste de integração contra o controller, não existe nenhum ainda pra nenhum
+ * controller admin deste projeto). Cobre, principalmente, a regra de "usuário é global no
+ * NimbusAuth" - update()/create() precisam preservar grupos de outros apps Nimbus (ex.: Cardsync)
+ * que o usuário já tenha, já que PUT /api/v1/users/{id} faz replace total da lista de grupos.
  */
 class AdminUserServiceTest {
 
@@ -34,13 +34,7 @@ class AdminUserServiceTest {
 
   private final NimbusAuthAdminClient client = mock(NimbusAuthAdminClient.class);
   private final NimbusAuthInternalClient internalClient = mock(NimbusAuthInternalClient.class);
-  private final CurrentUserProvider currentUserProvider = mock(CurrentUserProvider.class);
-  private final AdminUserService service = new AdminUserService(client, internalClient, currentUserProvider);
-
-  @BeforeEach
-  void setUp() {
-    when(currentUserProvider.hasAuthority(any())).thenReturn(true);
-  }
+  private final AdminUserService service = new AdminUserService(client, internalClient);
 
   @Test
   void listOnlyReturnsUsersWithAtLeastOneNimbusNovaxGroup() {
@@ -53,13 +47,6 @@ class AdminUserServiceTest {
     List<AdminUserResponse> result = service.list(TOKEN);
 
     assertThat(result).extracting(AdminUserResponse::userName).containsExactly("fiscal@acquamania.com.br");
-  }
-
-  @Test
-  void listRejectsWithoutConsultAuthority() {
-    when(currentUserProvider.hasAuthority("PERM_USERS_CONSULT")).thenReturn(false);
-
-    assertThatThrownBy(() -> service.list(TOKEN)).isInstanceOf(ResponseStatusException.class);
   }
 
   @Test
@@ -86,14 +73,6 @@ class AdminUserServiceTest {
     assertThat(captor.getValue().groupIds())
         .containsExactlyInAnyOrder(cardSyncGroupId, newNimbusNovaxGroupId)
         .doesNotContain(oldNimbusNovaxGroupId);
-  }
-
-  @Test
-  void createRejectsWithoutCreateAuthority() {
-    when(currentUserProvider.hasAuthority("PERM_USERS_CREATE")).thenReturn(false);
-    AdminUserRequest request = new AdminUserRequest("a@b.com", "A", "12345678901", Set.of(UUID.randomUUID()));
-
-    assertThatThrownBy(() -> service.create(TOKEN, request)).isInstanceOf(ResponseStatusException.class);
   }
 
   @Test
@@ -140,8 +119,7 @@ class AdminUserServiceTest {
   }
 
   @Test
-  void optionsDoesNotRequireAnyAuthority() {
-    when(currentUserProvider.hasAuthority(any())).thenReturn(false);
+  void optionsDelegatesToInternalClientSortedByName() {
     UUID userId = UUID.randomUUID();
     when(internalClient.fetchOptionsByAppKey("nimbusnovax"))
         .thenReturn(List.of(new NimbusAuthInternalClient.UserSummary(userId, "fiscal@acquamania.com.br", "Fiscal")));
@@ -152,7 +130,7 @@ class AdminUserServiceTest {
   }
 
   @Test
-  void activateBulkDelegatesToClientWhenAuthorized() {
+  void activateBulkDelegatesToClient() {
     List<UUID> ids = List.of(UUID.randomUUID(), UUID.randomUUID());
 
     service.activateBulk(TOKEN, ids);
@@ -161,12 +139,12 @@ class AdminUserServiceTest {
   }
 
   @Test
-  void deactivateBulkRejectsWithoutActiveOrInactiveAuthority() {
-    when(currentUserProvider.hasAuthority("PERM_USERS_ACTIVE_OR_INACTIVE")).thenReturn(false);
+  void deactivateBulkDelegatesToClient() {
     List<UUID> ids = List.of(UUID.randomUUID());
 
-    assertThatThrownBy(() -> service.deactivateBulk(TOKEN, ids)).isInstanceOf(ResponseStatusException.class);
-    verify(client, never()).deactivateUsersBulk(any(), any());
+    service.deactivateBulk(TOKEN, ids);
+
+    verify(client).deactivateUsersBulk(TOKEN, ids);
   }
 
   private RawUser rawUser(String userName, List<RawGroupOption> groups) {

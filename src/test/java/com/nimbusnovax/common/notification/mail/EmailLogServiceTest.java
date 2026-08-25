@@ -6,7 +6,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.web.PageResponse;
 import com.nimbusnovax.common.web.SearchRequest;
 import java.time.Instant;
 import java.util.LinkedHashSet;
@@ -15,11 +14,18 @@ import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 
 class EmailLogServiceTest {
 
   private final EmailLogRepository repository = mock(EmailLogRepository.class);
-  private final EmailLogService service = new EmailLogService(repository);
+  private final EmailLogSpecs emailLogSpecs = mock(EmailLogSpecs.class);
+  private final EmailLogService service = new EmailLogService(repository, emailLogSpecs);
 
   @Test
   void logSentJoinsAllRecipientsAndStoresBody() {
@@ -83,36 +89,28 @@ class EmailLogServiceTest {
     assertThat(saved.getBody()).isEqualTo("<html>corpo</html>");
   }
 
+  /** search() virou uma delegação fina pra EmailLogSpecs (monta a Specification a partir do
+   *  SearchRequest) + repository.findAll(spec, pageable) - filtro/ordenação/paginação de verdade
+   *  agora acontecem no banco, não em memória (ver EmailLogSpecs). Cobrir a lógica de filtro em si
+   *  exigiria um teste de integração com banco de verdade (Specification/Criteria API não executa
+   *  contra mocks) - fora do escopo deste teste unitário, que só garante a delegação certa. */
   @Test
-  void searchFiltersByRecipientsSubjectStatusAndEventType() {
-    EmailLogEntity sentToA = entityOf("a@example.com", "Aditivo aprovado", EmailLogStatus.SENT, "addendum_approved");
+  void searchDelegatesToEmailLogSpecsAndRepository() {
+    SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null, Map.of("status", List.of("FAILED")));
+    Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "sentAt"));
+
+    @SuppressWarnings("unchecked")
+    Specification<EmailLogEntity> spec = mock(Specification.class);
+    when(emailLogSpecs.fromRequest(request)).thenReturn(spec);
+
     EmailLogEntity failedToB = entityOf("b@example.com", "Pagamento liberado", EmailLogStatus.FAILED, "payment_released");
-    when(repository.findAll()).thenReturn(List.of(sentToA, failedToB));
+    Page<EmailLogEntity> expected = new PageImpl<>(List.of(failedToB), pageable, 1);
+    when(repository.findAll(spec, pageable)).thenReturn(expected);
 
-    SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null,
-        Map.of("status", List.of("FAILED")));
+    Page<EmailLogEntity> result = service.search(request, pageable);
 
-    PageResponse<EmailLogModel> page = service.search(request);
-
-    assertThat(page._embedded().content()).hasSize(1);
-    assertThat(page._embedded().content().get(0).recipients()).isEqualTo("b@example.com");
-    assertThat(page.page().totalElements()).isEqualTo(1);
-  }
-
-  @Test
-  void searchDefaultsToMostRecentFirstWhenNoSortGiven() {
-    EmailLogEntity older = entityOf("a@example.com", "Mais antigo", EmailLogStatus.SENT, "addendum_approved");
-    older.setSentAt(Instant.parse("2026-01-01T00:00:00Z"));
-    EmailLogEntity newer = entityOf("a@example.com", "Mais novo", EmailLogStatus.SENT, "addendum_approved");
-    newer.setSentAt(Instant.parse("2026-02-01T00:00:00Z"));
-    when(repository.findAll()).thenReturn(List.of(older, newer));
-
-    SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null, Map.of());
-
-    PageResponse<EmailLogModel> page = service.search(request);
-
-    assertThat(page._embedded().content()).extracting(EmailLogModel::subject)
-        .containsExactly("Mais novo", "Mais antigo");
+    assertThat(result.getContent()).containsExactly(failedToB);
+    assertThat(result.getTotalElements()).isEqualTo(1);
   }
 
   private EmailLogEntity entityOf(String recipients, String subject, EmailLogStatus status, String eventType) {
