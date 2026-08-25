@@ -6,6 +6,9 @@
     body { font-family: Helvetica, Arial, sans-serif; font-size: 12px; color: #1f2937; margin: 0; }
 
     .company { border-bottom: 3px solid #2563eb; padding-bottom: 10px; margin-bottom: 14px; }
+    .company table.company-head { width: 100%; border-collapse: collapse; }
+    .company .logo-cell { width: 60px; padding-right: 12px; vertical-align: top; }
+    .company .logo-cell img { max-width: 60px; max-height: 60px; }
     .company .name { font-size: 17px; font-weight: bold; color: #1e3a8a; }
     .company .line { font-size: 11px; color: #4b5563; margin-top: 2px; }
 
@@ -54,17 +57,26 @@
 <body>
 
   <div class="company">
-    <div class="name" th:text="${company.name ?: 'NimbusNovax'}">NOME DA EMPRESA</div>
-    <div class="line" th:if="${company.addressLine}"
-         th:text="${company.addressLine + (company.city != null ? (' - ' + company.city + '/' + company.state) : '')}">
-      Endereço - Cidade/UF
-    </div>
-    <div class="line">
-      <span th:if="${company.postalCode}" th:text="'CEP: ' + ${company.postalCode}">CEP: 00000-000</span>
-      <span th:if="${company.postalCode != null and company.phone != null}"> - </span>
-      <span th:if="${company.phone}" th:text="'Telefone: ' + ${company.phone}">Telefone: (00) 0000-0000</span>
-    </div>
-    <div class="line" th:if="${company.document}" th:text="'CNPJ: ' + ${company.document}">CNPJ: 00.000.000/0000-00</div>
+    <table class="company-head">
+      <tr>
+        <td class="logo-cell" th:if="${company.logoUrl}">
+          <img th:src="${company.logoUrl}" alt="Logo" />
+        </td>
+        <td>
+          <div class="name" th:text="${company.name ?: 'NimbusNovax'}">NOME DA EMPRESA</div>
+          <div class="line" th:if="${company.addressLine}"
+               th:text="${company.addressLine + (company.city != null ? (' - ' + company.city + '/' + company.state) : '')}">
+            Endereço - Cidade/UF
+          </div>
+          <div class="line">
+            <span th:if="${company.postalCode}" th:text="'CEP: ' + ${company.postalCode}">CEP: 00000-000</span>
+            <span th:if="${company.postalCode != null and company.phone != null}"> - </span>
+            <span th:if="${company.phone}" th:text="'Telefone: ' + ${company.phone}">Telefone: (00) 0000-0000</span>
+          </div>
+          <div class="line" th:if="${company.document}" th:text="'CNPJ: ' + ${company.document}">CNPJ: 00.000.000/0000-00</div>
+        </td>
+      </tr>
+    </table>
   </div>
 
   <table class="title-row">

@@ -69,7 +69,7 @@ class VoucherTemplatesRenderTest {
     return new CompanySettingsModel(
         "ACQUAMANIA MÚLTIPLO LAZER S.A", "39.303.847/0001-80",
         "Rua das Acácias, n° S/N - Comunidade Urbana de Lagoa Dourada", "Guarapari", "ES",
-        "29226-766", "(27) 3221-6666", null);
+        "29226-766", "(27) 3221-6666", null, "https://novax-api.nimbussystems.com.br/public/company-logo");
   }
 
   private List<String> sampleImportantInfo() {
@@ -107,7 +107,7 @@ class VoucherTemplatesRenderTest {
     // Empresa/config ainda não preenchidas (getOrDefaultModel/parseLines devolvem valores em
     // branco nesse caso, ver CompanySettingsService/VoucherFlowService) - não pode quebrar.
     assertRenders("voucher/send-voucher", sampleVoucher(false, false),
-        new CompanySettingsModel(null, null, null, null, null, null, null, null), List.of());
+        new CompanySettingsModel(null, null, null, null, null, null, null, null, null), List.of());
   }
 
   @Test
@@ -118,7 +118,7 @@ class VoucherTemplatesRenderTest {
   @Test
   void rendersVoucherPdf_ticketsOnly_noCompanyNoImportantInfo() {
     assertRenders("voucher/voucher-pdf", sampleVoucher(false, false),
-        new CompanySettingsModel(null, null, null, null, null, null, null, null), List.of());
+        new CompanySettingsModel(null, null, null, null, null, null, null, null, null), List.of());
   }
 
   @Test
@@ -129,7 +129,7 @@ class VoucherTemplatesRenderTest {
   @Test
   void rendersChangeVoucherEmail_noCompany() {
     assertRenders("voucher/change-voucher", sampleVoucher(false, false),
-        new CompanySettingsModel(null, null, null, null, null, null, null, null), List.of());
+        new CompanySettingsModel(null, null, null, null, null, null, null, null, null), List.of());
   }
 
   @Test
@@ -151,7 +151,7 @@ class VoucherTemplatesRenderTest {
     Context context = new Context();
     context.setVariable("vouchers", List.of(
         new ExpiredVoucherWarningItem("EVT1922", "Maurício Manhaes", "Ramonik Barreto", LocalDate.of(2026, 1, 16), 5L)));
-    context.setVariable("company", new CompanySettingsModel(null, null, null, null, null, null, null, null));
+    context.setVariable("company", new CompanySettingsModel(null, null, null, null, null, null, null, null, null));
 
     String html = templateEngine().process("voucher/warning-voucher-expired", context);
 

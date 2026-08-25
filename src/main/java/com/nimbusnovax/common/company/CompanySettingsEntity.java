@@ -50,6 +50,18 @@ public class CompanySettingsEntity {
   @Column(length = 255)
   private String email;
 
+  /** Bytes crus da logo (opcional) - guardada no banco, não em bucket S3 (diferente de
+   *  MeasurementMedia/TicketClosePhoto no NimbusFlow), por ser uma imagem única e pequena (linha
+   *  única desta tabela, limite de 2MB aplicado em CompanySettingsService) - não vale a
+   *  complexidade extra de storage externo pra um caso desse tamanho. Servida sem autenticação por
+   *  PublicCompanyLogoController (referenciada por URL no e-mail/PDF do voucher, que não tem
+   *  sessão/cookie). */
+  @Column(name = "logo_data")
+  private byte[] logoData;
+
+  @Column(name = "logo_content_type", length = 100)
+  private String logoContentType;
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;

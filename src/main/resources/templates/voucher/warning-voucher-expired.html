@@ -12,8 +12,18 @@
         <!-- Header -->
         <tr>
           <td style="background-color:#d97706; padding:22px 28px;">
-            <div style="color:#ffffff; font-size:20px; font-weight:bold;">⚠ Vouchers vencidos</div>
-            <div style="color:#fef3c7; font-size:13px; margin-top:2px;" th:text="${company.name ?: 'NimbusNovax'}">Empresa</div>
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td th:if="${company.logoUrl}" style="padding-right:12px; vertical-align:middle;">
+                  <img th:src="${company.logoUrl}" alt="Logo" width="44" height="44"
+                       style="display:block; max-width:44px; max-height:44px; border-radius:6px;" />
+                </td>
+                <td style="vertical-align:middle;">
+                  <div style="color:#ffffff; font-size:20px; font-weight:bold;">⚠ Vouchers vencidos</div>
+                  <div style="color:#fef3c7; font-size:13px; margin-top:2px;" th:text="${company.name ?: 'NimbusNovax'}">Empresa</div>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
 

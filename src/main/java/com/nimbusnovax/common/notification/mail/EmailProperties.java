@@ -24,6 +24,15 @@ public class EmailProperties {
   private String fromName;
   private String fromEmail;
 
+  /** Base pública deste próprio backend (sem barra final) - hoje só usada por
+   *  {@code CompanySettingsService} pra montar a URL absoluta da logo da empresa embutida no
+   *  cabeçalho do e-mail/PDF do voucher (ver PublicCompanyLogoController). Mesmo nome/papel de
+   *  {@code publicBaseUrl} no NimbusAuth/CardsyncServer (lá usado pra logo fixa da marca em
+   *  {@code LOGO_ASSET_PATH}) - aqui não tem default de produção "chumbado" porque a logo é
+   *  dinâmica (cada ambiente tem seu próprio banco), então dev/prod precisam apontar pra si
+   *  mesmos, não para o outro (ver application-dev.yml/application-prod.yml). */
+  private String publicBaseUrl;
+
   private Impl impl = Impl.FAKE;
   private final Brevo brevo = new Brevo();
   private final Smtp smtp = new Smtp();

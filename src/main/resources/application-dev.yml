@@ -81,6 +81,12 @@ nimbusnovax:
     impl: ${NIMBUSNOVAX_EMAIL_IMPL:fake}
     from-name: ${NIMBUSNOVAX_EMAIL_FROM_NAME:NimbusNovax}
     from-email: ${NIMBUSNOVAX_EMAIL_FROM_EMAIL:naoresponda@nimbussystems.com.br}
+    # Base pública DESTE backend (não a de produção!) - usada só pra montar a URL absoluta da logo
+    # da empresa (ver EmailProperties.publicBaseUrl/CompanySettingsService). Diferente do
+    # publicBaseUrl fixo do NimbusAuth/CardsyncServer (aponta sempre pra produção lá, pois é uma
+    # logo fixa/idêntica nos dois ambientes) - aqui a logo é dinâmica (vem do banco de CADA
+    # ambiente), então apontar pra produção em dev mostraria a logo errada (ou nenhuma).
+    public-base-url: ${NIMBUSNOVAX_API_PUBLIC_BASE_URL:http://localhost:${SERVER_PORT:9093}}
     brevo:
       base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
       api-key: ${BREVO_API_KEY:}

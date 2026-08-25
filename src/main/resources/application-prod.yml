@@ -76,6 +76,11 @@ nimbusnovax:
     impl: ${NIMBUSNOVAX_EMAIL_IMPL:fake}
     from-name: ${NIMBUSNOVAX_EMAIL_FROM_NAME:NimbusNovax}
     from-email: ${NIMBUSNOVAX_EMAIL_FROM_EMAIL:naoresponda@nimbussystems.com.br}
+    # Base pública deste próprio backend - usada só pra montar a URL absoluta da logo da empresa
+    # (ver EmailProperties.publicBaseUrl/CompanySettingsService). Default já aponta pro host real
+    # de produção (mesmo de NIMBUSNOVAX_ALLOWED_ORIGIN/environment.prod.ts no NimbusNovaxWeb), a
+    # env var só existe pra permitir trocar sem novo deploy se o domínio mudar.
+    public-base-url: ${NIMBUSNOVAX_API_PUBLIC_BASE_URL:https://novax-api.nimbussystems.com.br}
     brevo:
       base-url: ${BREVO_BASE_URL:https://api.brevo.com/v3}
       api-key: ${BREVO_API_KEY:}
