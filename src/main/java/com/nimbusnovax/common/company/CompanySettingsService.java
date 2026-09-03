@@ -1,6 +1,6 @@
 package com.nimbusnovax.common.company;
 
-import com.nimbusnovax.common.notification.mail.EmailProperties;
+import com.nimbussystems.commons.notification.mail.EmailProperties;
 import com.nimbussystems.commons.security.CurrentUserProvider;
 import java.io.IOException;
 import java.util.Optional;

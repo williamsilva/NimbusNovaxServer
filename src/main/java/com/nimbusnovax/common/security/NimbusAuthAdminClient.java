@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.List;

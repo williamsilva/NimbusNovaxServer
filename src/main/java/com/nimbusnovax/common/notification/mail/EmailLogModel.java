@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.notification.mail;
 
+import com.nimbussystems.commons.notification.mail.EmailLogStatus;
+
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;

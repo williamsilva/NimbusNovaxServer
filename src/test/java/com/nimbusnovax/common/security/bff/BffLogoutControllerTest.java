@@ -7,7 +7,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.security.NimbusNovaxSecurityProperties;
+import com.nimbussystems.commons.security.NimbusSecurityProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -23,7 +23,7 @@ import org.springframework.web.client.RestClient;
 
 class BffLogoutControllerTest {
 
-  private final NimbusNovaxSecurityProperties props = new NimbusNovaxSecurityProperties();
+  private final NimbusSecurityProperties props = new NimbusSecurityProperties();
   private final OAuth2AuthorizedClientRepository authorizedClientRepository = mock(OAuth2AuthorizedClientRepository.class);
   // Não exercido pelos 2 testes abaixo (nenhum cobre o caminho de refresh_token que usa o
   // RestClient.Builder) - mock só pra satisfazer o construtor (ver fetchFreshIdToken).
@@ -33,7 +33,7 @@ class BffLogoutControllerTest {
 
   {
     props.setIssuer("http://localhost:9090");
-    NimbusNovaxSecurityProperties.Cookies cookies = new NimbusNovaxSecurityProperties.Cookies();
+    NimbusSecurityProperties.Cookies cookies = new NimbusSecurityProperties.Cookies();
     cookies.setSecure(false);
     cookies.setSameSite("Lax");
     props.setCookies(cookies);

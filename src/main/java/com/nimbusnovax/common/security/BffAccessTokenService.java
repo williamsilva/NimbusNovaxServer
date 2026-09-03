@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.NimbusSecurityProperties;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +27,7 @@ public class BffAccessTokenService {
   private static final String REGISTRATION_ID = "nimbusnovax-bff";
 
   private final OAuth2AuthorizedClientManager authorizedClientManager;
-  private final NimbusNovaxSecurityProperties props;
+  private final NimbusSecurityProperties props;
 
   public String getValidAccessToken(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
     if (!(authentication instanceof OAuth2AuthenticationToken oauth2Auth)) {

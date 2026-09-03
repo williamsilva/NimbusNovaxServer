@@ -1,5 +1,11 @@
 package com.nimbusnovax.common.notification.mail;
 
+import com.nimbussystems.commons.notification.mail.EmailSenderService;
+
+import com.nimbussystems.commons.notification.mail.EmailLogStatus;
+
+import com.nimbussystems.commons.notification.mail.EmailLogEntity;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;

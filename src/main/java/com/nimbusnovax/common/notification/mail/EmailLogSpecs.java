@@ -1,5 +1,9 @@
 package com.nimbusnovax.common.notification.mail;
 
+import com.nimbussystems.commons.notification.mail.EmailLogStatus;
+
+import com.nimbussystems.commons.notification.mail.EmailLogEntity;
+
 import com.nimbussystems.commons.web.FilterSupport;
 import com.nimbussystems.commons.web.SearchRequest;
 import com.nimbusnovax.common.web.spec.BaseSpecificationSupport;

@@ -1,5 +1,13 @@
 package com.nimbusnovax.common.notification.mail;
 
+import com.nimbussystems.commons.notification.mail.EmailDeliveryLogger;
+
+import com.nimbussystems.commons.notification.mail.EmailLogStatus;
+
+import com.nimbussystems.commons.notification.mail.EmailLogEntity;
+
+import com.nimbussystems.commons.notification.mail.EmailSenderService;
+
 import com.nimbussystems.commons.web.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -11,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class EmailLogService {
+public class EmailLogService implements EmailDeliveryLogger {
 
   private final EmailLogRepository repository;
   private final EmailLogSpecs emailLogSpecs;
@@ -21,6 +29,7 @@ public class EmailLogService {
    *  este save() participa dessa transação de leitura e é descartado silenciosamente no commit
    *  (Hibernate nem chega a fazer flush de uma sessão só-leitura) - o e-mail sai de verdade, mas a
    *  auditoria em email_log fica muda, sem nenhum erro visível. Mesmo motivo de logError abaixo. */
+  @Override
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void logSent(EmailSenderService.Message message, String body) {
     repository.save(EmailLogEntity.builder()
@@ -36,6 +45,7 @@ public class EmailLogService {
 
   /** REQUIRES_NEW - mesmo motivo do EmailLogService.logError no NimbusAuth: o registro do erro
    *  precisa sobreviver mesmo que a transação que tentou enviar o e-mail seja revertida depois. */
+  @Override
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void logError(EmailSenderService.Message message, String body, Exception ex) {
     repository.save(EmailLogEntity.builder()

@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;

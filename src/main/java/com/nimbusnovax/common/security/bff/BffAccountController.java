@@ -10,7 +10,7 @@ import com.nimbussystems.commons.security.bff.ChangePasswordRequest;
 
 import com.nimbusnovax.common.security.BffAccessTokenService;
 import com.nimbussystems.commons.security.CurrentUserProvider;
-import com.nimbusnovax.common.security.NimbusAuthClient;
+import com.nimbussystems.commons.security.NimbusAuthClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
