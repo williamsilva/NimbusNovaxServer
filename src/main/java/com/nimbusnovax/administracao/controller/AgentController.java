@@ -10,7 +10,7 @@ import com.nimbusnovax.administracao.representation.AgentModel;
 import com.nimbusnovax.administracao.representation.AgentModelAssembler;
 import com.nimbusnovax.common.security.CheckSecurity;
 import com.nimbusnovax.common.web.PageableMapper;
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.web.SearchRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;

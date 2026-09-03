@@ -6,7 +6,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.web.SearchRequest;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;

@@ -8,7 +8,7 @@ import com.nimbusnovax.administracao.representation.CancellationReasonModel;
 import com.nimbusnovax.administracao.representation.CancellationReasonModelAssembler;
 import com.nimbusnovax.common.security.CheckSecurity;
 import com.nimbusnovax.common.web.PageableMapper;
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.web.SearchRequest;
 import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;

@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.CurrentUserProvider;
+
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 

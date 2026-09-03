@@ -1,8 +1,8 @@
 package com.nimbusnovax.common.security;
 
-import com.nimbusnovax.common.security.bff.ChangePasswordRequest;
-import com.nimbusnovax.common.security.bff.PasswordPolicyResponse;
-import com.nimbusnovax.common.security.bff.ProfileResponse;
+import com.nimbussystems.commons.security.bff.ChangePasswordRequest;
+import com.nimbussystems.commons.security.bff.PasswordPolicyResponse;
+import com.nimbussystems.commons.security.bff.ProfileResponse;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
  * BffApiClient/PasswordPolicyProxyController do CardSyncServer, só que com DTOs tipados (não
  * repassa o JSON bruto do NimbusAuth pro browser) e injetando o username do usuário autenticado
  * na checagem de política em vez de aceitar um vindo do cliente. Timeout de conexão/leitura vem
- * do RestClientCustomizer global (ver com.nimbusnovax.common.config.RestClientTimeoutConfig) -
+ * do RestClientCustomizer global (ver com.nimbussystems.commons.config.RestClientTimeoutConfig) -
  * não é setado aqui pra não sobrescrever o MockServerRestClientCustomizer que @RestClientTest
  * injeta no RestClient.Builder (ver NimbusAuthClientTest).
  */

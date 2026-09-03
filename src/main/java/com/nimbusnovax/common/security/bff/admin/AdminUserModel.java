@@ -1,5 +1,11 @@
 package com.nimbusnovax.common.security.bff.admin;
 
+import com.nimbussystems.commons.security.bff.admin.AdminUserResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminUserMinimalResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupOptionResponse;
+
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;

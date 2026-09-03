@@ -1,5 +1,19 @@
 package com.nimbusnovax.common.security.bff.admin;
 
+import com.nimbussystems.commons.security.bff.admin.AdminUserResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminUserRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminUserMinimalResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminSearchRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminPageResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupOptionResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminFilterSupport;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;

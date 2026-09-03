@@ -1,5 +1,27 @@
 package com.nimbusnovax.common.security.bff.admin;
 
+import com.nimbussystems.commons.security.bff.admin.AdminUserRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminUserMinimalResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminSearchRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminPermissionOptionResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupUsersRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupSummaryResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupPermissionsRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupOptionResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminFilterSupport;
+
 import com.nimbusnovax.common.security.NimbusAuthAdminClient;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroup;
 import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroupInput;

@@ -8,8 +8,8 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-import com.nimbusnovax.common.security.bff.ChangePasswordRequest;
-import com.nimbusnovax.common.security.bff.ProfileResponse;
+import com.nimbussystems.commons.security.bff.ChangePasswordRequest;
+import com.nimbussystems.commons.security.bff.ProfileResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

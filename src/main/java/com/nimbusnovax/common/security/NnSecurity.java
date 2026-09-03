@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.CurrentUserProvider;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

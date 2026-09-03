@@ -7,7 +7,7 @@ import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.repository.CancellationReasonRepository;
 import com.nimbusnovax.common.company.CompanySettingsService;
 import com.nimbusnovax.common.notification.mail.EmailSenderService;
-import com.nimbusnovax.common.security.CurrentUserProvider;
+import com.nimbussystems.commons.security.CurrentUserProvider;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Voucher;

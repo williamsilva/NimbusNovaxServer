@@ -2,8 +2,8 @@ package com.nimbusnovax.administracao.core;
 
 import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.model.enums.StatusEnum;
-import com.nimbusnovax.common.web.FilterSupport;
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.web.FilterSupport;
+import com.nimbussystems.commons.web.SearchRequest;
 import com.nimbusnovax.common.web.spec.BaseSpecificationSupport;
 import com.nimbusnovax.common.web.spec.Specs;
 import java.util.List;

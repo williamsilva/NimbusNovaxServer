@@ -1,5 +1,11 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.UserMinimalResponse;
+
+import com.nimbussystems.commons.security.UserDirectoryRepository;
+
+import com.nimbussystems.commons.security.UserDirectoryEntity;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;

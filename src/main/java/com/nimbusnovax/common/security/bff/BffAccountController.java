@@ -1,7 +1,15 @@
 package com.nimbusnovax.common.security.bff;
 
+import com.nimbussystems.commons.security.bff.ProfileResponse;
+
+import com.nimbussystems.commons.security.bff.PasswordPolicyResponse;
+
+import com.nimbussystems.commons.security.bff.PasswordPolicyCheckRequest;
+
+import com.nimbussystems.commons.security.bff.ChangePasswordRequest;
+
 import com.nimbusnovax.common.security.BffAccessTokenService;
-import com.nimbusnovax.common.security.CurrentUserProvider;
+import com.nimbussystems.commons.security.CurrentUserProvider;
 import com.nimbusnovax.common.security.NimbusAuthClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

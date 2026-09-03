@@ -21,12 +21,26 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven {
+		name = "GitHubPackages"
+		url = uri("https://maven.pkg.github.com/williamsilva/NimbusCommonsServer")
+		credentials {
+			username = (project.findProperty("gpr.user") as String?) ?: System.getenv("GITHUB_ACTOR")
+			password = (project.findProperty("gpr.token") as String?) ?: System.getenv("GITHUB_TOKEN")
+		}
+	}
 }
 
 val testcontainersVersion = "1.21.3"
 val hibernateSpatialVersion = "6.5.2.Final"
 
 dependencies {
+	// Fase 1 do levantamento de duplicação entre CardSync/NimbusFlow/NimbusNovax/NimbusAuth -
+	// código de com.nimbusnovax.common que era byte-idêntico ao do NimbusFlowServer, extraído pra
+	// não ter mais 2 cópias divergindo silenciosamente (ver README do NimbusCommonsServer pro que
+	// NÃO foi extraído e por quê).
+	implementation("com.nimbussystems:nimbus-commons-server:0.1.2")
+
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-hateoas")

@@ -1,6 +1,6 @@
 package com.nimbusnovax.common.notification.mail;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
+import com.nimbussystems.commons.security.CurrentUserProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
  * Menu "Configurações &gt; E-mail" - sessão/cookie (chain /bff/**, não JWT), mesmo padrão de
  * BffAdminUsersController. Permissões próprias do app nimbusnovax, seguem seedadas via migration
  * no repo NimbusAuth (EMAIL_SETTINGS_CONSULT/EMAIL_SETTINGS_PROCESS) - ver
- * com.nimbusnovax.common.security.CurrentUserProvider e o padrão já documentado na memória
+ * com.nimbussystems.commons.security.CurrentUserProvider e o padrão já documentado na memória
  * "projeto-manage-permission-gap".
  */
 @RestController

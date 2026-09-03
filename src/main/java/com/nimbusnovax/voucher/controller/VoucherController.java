@@ -2,7 +2,7 @@ package com.nimbusnovax.voucher.controller;
 
 import com.nimbusnovax.common.security.CheckSecurity;
 import com.nimbusnovax.common.web.PageableMapper;
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.web.SearchRequest;
 import com.nimbusnovax.voucher.core.VoucherService;
 import com.nimbusnovax.voucher.dto.request.VoucherRequest;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;

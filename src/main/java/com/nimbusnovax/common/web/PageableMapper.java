@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.web;
 
+import com.nimbussystems.commons.web.SearchRequest;
+
 import java.util.List;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;

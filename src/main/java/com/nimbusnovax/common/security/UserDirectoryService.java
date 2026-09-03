@@ -1,5 +1,11 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.UserMinimalResponse;
+
+import com.nimbussystems.commons.security.UserDirectoryRepository;
+
+import com.nimbussystems.commons.security.UserDirectoryEntity;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.time.OffsetDateTime;

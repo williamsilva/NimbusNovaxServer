@@ -1,6 +1,6 @@
 package com.nimbusnovax.voucher.core;
 
-import com.nimbusnovax.common.security.CurrentUserProvider;
+import com.nimbussystems.commons.security.CurrentUserProvider;
 import com.nimbusnovax.voucher.dto.request.ConfigVoucherRequest;
 import com.nimbusnovax.voucher.dto.response.ConfigVoucherResponse;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
