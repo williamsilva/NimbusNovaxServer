@@ -20,7 +20,7 @@ import org.springframework.data.jpa.domain.Specification;
  * Helpers de {@link Specification} (JPA Criteria) reaproveitáveis entre entidades — mesmo espírito
  * de {@code BaseSpecificationSupport} do CardSync, mas reduzida ao que as specs do NimbusNovax
  * realmente precisam: os valores de filtro (texto, listas, ranges de data) já chegam RESOLVIDOS
- * por {@code com.nimbusnovax.common.web.FilterSupport} (mesma extração usada hoje pelo filtro em
+ * por {@code com.nimbussystems.commons.web.FilterSupport} (mesma extração usada hoje pelo filtro em
  * memória) — não há necessidade de portar {@code SpecificationFactory}/{@code FieldSpec}/
  * {@code DateFilterService} do CardSync, que existem lá para resolver o mesmo problema que o
  * {@code FilterSupport} já resolve aqui.

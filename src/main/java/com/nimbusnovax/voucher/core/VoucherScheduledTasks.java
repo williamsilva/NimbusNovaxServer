@@ -3,7 +3,7 @@ package com.nimbusnovax.voucher.core;
 import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.repository.CancellationReasonRepository;
 import com.nimbusnovax.common.company.CompanySettingsService;
-import com.nimbusnovax.common.notification.mail.EmailSenderService;
+import com.nimbussystems.commons.notification.mail.EmailSenderService;
 import com.nimbusnovax.common.security.NimbusAuthInternalClient;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Voucher;

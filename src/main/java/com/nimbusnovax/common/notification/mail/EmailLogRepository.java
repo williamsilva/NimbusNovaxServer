@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.notification.mail;
 
+import com.nimbussystems.commons.notification.mail.EmailLogEntity;
+
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;

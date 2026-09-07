@@ -1,8 +1,10 @@
 package com.nimbusnovax.common.notification.mail;
 
+import com.nimbussystems.commons.notification.mail.EmailLogEntity;
+
 import com.nimbusnovax.common.security.CheckSecurity;
 import com.nimbusnovax.common.web.PageableMapper;
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.web.SearchRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

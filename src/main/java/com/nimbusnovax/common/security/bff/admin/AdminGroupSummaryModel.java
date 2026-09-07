@@ -1,5 +1,9 @@
 package com.nimbusnovax.common.security.bff.admin;
 
+import com.nimbussystems.commons.security.bff.admin.AdminUserMinimalResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupSummaryResponse;
+
 import java.time.Instant;
 import java.util.UUID;
 import lombok.Getter;

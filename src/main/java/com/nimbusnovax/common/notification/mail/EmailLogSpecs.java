@@ -1,7 +1,11 @@
 package com.nimbusnovax.common.notification.mail;
 
-import com.nimbusnovax.common.web.FilterSupport;
-import com.nimbusnovax.common.web.SearchRequest;
+import com.nimbussystems.commons.notification.mail.EmailLogStatus;
+
+import com.nimbussystems.commons.notification.mail.EmailLogEntity;
+
+import com.nimbussystems.commons.web.FilterSupport;
+import com.nimbussystems.commons.web.SearchRequest;
 import com.nimbusnovax.common.web.spec.BaseSpecificationSupport;
 import com.nimbusnovax.common.web.spec.Specs;
 import java.time.Instant;

@@ -1,5 +1,7 @@
 package com.nimbusnovax.common.security.bff.admin;
 
+import com.nimbussystems.commons.security.bff.admin.AdminUserResponse;
+
 import java.util.List;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;

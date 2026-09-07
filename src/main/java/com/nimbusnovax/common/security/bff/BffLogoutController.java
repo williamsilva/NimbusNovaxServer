@@ -1,7 +1,7 @@
 package com.nimbusnovax.common.security.bff;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.nimbusnovax.common.security.NimbusNovaxSecurityProperties;
+import com.nimbussystems.commons.security.NimbusSecurityProperties;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.net.URLEncoder;
@@ -36,7 +36,7 @@ public class BffLogoutController {
   private record TokenRefreshResponse(@JsonProperty("id_token") String idToken) {
   }
 
-  private final NimbusNovaxSecurityProperties props;
+  private final NimbusSecurityProperties props;
   private final OAuth2AuthorizedClientRepository authorizedClientRepository;
   private final RestClient.Builder restClientBuilder;
 

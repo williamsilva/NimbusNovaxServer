@@ -1,5 +1,15 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.NimbusSecurityProperties;
+
+import com.nimbussystems.commons.security.ResourceServerJwtBeans;
+
+import com.nimbussystems.commons.security.SpaCsrfTokenRequestHandler;
+
+import com.nimbussystems.commons.security.OAuth2ClientHttpConfig;
+
+import com.nimbussystems.commons.security.CsrfCookieFilter;
+
 import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.LinkedHashSet;
@@ -60,7 +70,7 @@ public class SecurityConfig {
 
   private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
-  private final NimbusNovaxSecurityProperties props;
+  private final NimbusSecurityProperties props;
 
   // ---------------------------
   // 1) API CHAIN (/api/**) STATELESS

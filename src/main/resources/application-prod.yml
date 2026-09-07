@@ -43,7 +43,10 @@ server:
         secure: true
         same-site: LAX
 
-nimbusnovax:
+# Fase 2 do levantamento de duplicação: security/nimbusauth/email eram nimbusnovax.* aqui -
+# viraram nimbus.* (prefixo neutro compartilhado com NimbusCommonsServer), com os mesmos env vars
+# de sempre do lado direito (nenhuma mudança de env var no Railway, só o caminho na YAML).
+nimbus:
   security:
     issuer: ${NIMBUS_AUTH_ISSUER}
 
@@ -67,7 +70,7 @@ nimbusnovax:
     # protege /internal/users (NimbusAuthInternalClient/UserDirectoryService).
     internal-api-secret: ${NIMBUS_INTERNAL_API_SECRET}
 
-  # com.nimbusnovax.common.notification.mail.EmailProperties - default "fake" DE PROPÓSITO
+  # com.nimbussystems.commons.notification.mail.EmailProperties - default "fake" DE PROPÓSITO
   # (mesmo em produção): nenhum evento de negócio dispara envio ainda, então não há motivo pra
   # exigir credencial nenhuma configurada só pra este deploy não quebrar o boot. Trocar pra
   # "api_key" (Brevo) só quando alguém configurar de verdade via env var OU pela tela

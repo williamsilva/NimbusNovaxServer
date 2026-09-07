@@ -1,5 +1,29 @@
 package com.nimbusnovax.common.security.bff.admin;
 
+import com.nimbussystems.commons.security.bff.admin.AdminUserRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminUserMinimalResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminSearchRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminPermissionOptionResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminPageResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupUsersRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupSummaryResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupPermissionsRequest;
+
+import com.nimbussystems.commons.security.bff.admin.AdminGroupOptionResponse;
+
+import com.nimbussystems.commons.security.bff.admin.AdminFilterSupport;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

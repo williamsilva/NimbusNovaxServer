@@ -29,7 +29,7 @@ spring:
             # NIMBUS_AUTH_INTERNAL_BASE_URL, que diverge do issuer quando o backend roda
             # containerizado (docker compose) e o NimbusAuth roda nativamente no host (ver
             # comentário de NIMBUS_AUTH_INTERNAL_BASE_URL no .env.example).
-            authorization-uri: ${nimbusnovax.security.issuer}/oauth2/authorize
+            authorization-uri: ${nimbus.security.issuer}/oauth2/authorize
             token-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/oauth2/token
             jwk-set-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/oauth2/jwks
             user-info-uri: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}/userinfo
@@ -46,7 +46,10 @@ server:
         secure: false # dev; em prod true
         same-site: LAX
 
-nimbusnovax:
+# Fase 2 do levantamento de duplicação: security/nimbusauth/email eram nimbusnovax.* aqui -
+# viraram nimbus.* (prefixo neutro compartilhado com NimbusCommonsServer), com os mesmos env vars
+# de sempre do lado direito (nenhuma mudança de env var no Railway, só o caminho na YAML).
+nimbus:
   security:
     # Issuer do NimbusAuth (real, rodando localmente fora do docker-compose - nem o NimbusAuth
     # nem o Cardsync são dockerizados nesta workspace).
@@ -67,15 +70,15 @@ nimbusnovax:
         - ${CORS_ALLOWED_ORIGINS:http://localhost:4203}
 
   nimbusauth:
-    # Mesma base do jwk-set-uri acima (nimbusnovax.security.resource-server.jwk-set-uri), exposta
+    # Mesma base do jwk-set-uri acima (nimbus.security.resource-server.jwk-set-uri), exposta
     # separadamente pra ser reaproveitada nas chamadas REST de perfil/senha
-    # (com.nimbusnovax.common.security.NimbusAuthClient).
+    # (com.nimbussystems.commons.security.NimbusAuthClient).
     base-url: ${NIMBUS_AUTH_INTERNAL_BASE_URL:http://localhost:9090}
     # Mesmo secret compartilhado já configurado no NimbusAuth e no CardsyncServer - protege
     # /internal/users (com.nimbusnovax.common.security.NimbusAuthInternalClient/UserDirectoryService).
     internal-api-secret: ${NIMBUS_INTERNAL_API_SECRET:dev-internal-secret-change-me}
 
-  # com.nimbusnovax.common.notification.mail.EmailProperties - fake por default (só loga, sem
+  # com.nimbussystems.commons.notification.mail.EmailProperties - fake por default (só loga, sem
   # credencial nenhuma necessária em dev).
   email:
     impl: ${NIMBUSNOVAX_EMAIL_IMPL:fake}
