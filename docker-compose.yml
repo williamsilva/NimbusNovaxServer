@@ -1,0 +1,84 @@
+# Sobe o backend do NimbusNovax (postgres+server) sozinho. Uso normal é via
+# ../docker-compose.yml (na raiz do produto, "include:" deste arquivo + do
+# NimbusNovaxWeb/docker-compose.yml) - rode daqui direto só se quiser testar isoladamente. As
+# variáveis (${...}) são resolvidas contra o .env adjacente ao arquivo TOP-LEVEL realmente
+# executado: se subir por aqui, crie um .env nesta pasta; se subir via include a partir da raiz,
+# use o .env de lá (é o que os outros devs fazem no dia a dia).
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: nimbusnovax
+      POSTGRES_PASSWORD: changeme-local-only
+      POSTGRES_DB: nimbusnovax
+    ports:
+      # IPv4 explícito (127.0.0.1) - o encaminhamento IPv6 do Docker Desktop pra portas publicadas
+      # tem travado indefinidamente em algumas máquinas Windows (handshake TCP completa, resposta
+      # HTTP nunca chega); "localhost" resolve IPv6 primeiro no Windows, então sem isso o
+      # navegador/cliente trava até o timeout antes de cair pro IPv4 que funciona.
+      # Porta 5433 no host (não 5432) - evita conflitar com o Postgres do projeto de origem
+      # NimbusFlow (docker-compose próprio dele, mesma porta padrão) quando os dois rodam lado a
+      # lado na mesma máquina. A comunicação server->postgres continua na porta interna 5432
+      # (rede do compose).
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nimbusnovax -d nimbusnovax"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build:
+      context: .
+      # GITHUB_ACTOR/GITHUB_TOKEN: build args, não "environment" (variável de serviço só chega ao
+      # CONTAINER em runtime, nunca ao processo de build do Dockerfile - mesmo achado feito com o
+      # Railway, ver Dockerfile do NimbusNovaxServer). Necessário pro Gradle baixar o
+      # com.nimbussystems:nimbus-commons-server do GitHub Packages - sem isto, `docker compose
+      # build` falha com "Username must not be null!" (achado real 2026-09-07, depois do bump de
+      # versão da lib invalidar o cache de camada que escondia esse gap). Sete estas 2 vars num
+      # .env (não commitado) - mesmo GITHUB_ACTOR/GITHUB_TOKEN já usados em ~/.gradle/gradle.properties.
+      args:
+        GITHUB_ACTOR: ${GITHUB_ACTOR}
+        GITHUB_TOKEN: ${GITHUB_TOKEN}
+    ports:
+      # 9093, não 9092 - evita conflitar com o backend do NimbusFlow (mesma porta padrão) quando
+      # os dois rodam lado a lado na mesma máquina.
+      - "127.0.0.1:9093:9093"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SERVER_PORT: "9093"
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_DATABASE: nimbusnovax
+      DB_USERNAME: nimbusnovax
+      DB_PASSWORD: changeme-local-only
+      # NimbusAuth roda em container nesta workspace (nimbusauth-nimbus-auth-1), publicado em
+      # 127.0.0.1:9090 - mas o container do NimbusNovax não enxerga "localhost" do host, precisa
+      # do DNS especial do Docker Desktop. authorization-uri (NIMBUS_AUTH_ISSUER) é enviado ao
+      # BROWSER via redirect - precisa ser algo que o Windows resolva (localhost), não
+      # host.docker.internal (que só existe de dentro do container).
+      # NIMBUS_AUTH_INTERNAL_BASE_URL, por outro lado, é usado só em chamadas backend->backend
+      # (token/jwk-set/user-info) que acontecem de DENTRO do container - esse sim precisa de
+      # host.docker.internal. extra_hosts abaixo garante a resolução também no Linux (no Docker
+      # Desktop/Mac/Windows já funciona sem isso).
+      NIMBUS_AUTH_ISSUER: http://localhost:9090
+      NIMBUS_AUTH_INTERNAL_BASE_URL: http://host.docker.internal:9090
+      NIMBUSNOVAX_SPA_BASE_URL: http://localhost:4203
+      CORS_ALLOWED_ORIGINS: http://localhost:4203
+      # Overrides opcionais - "nimbusnovax-bff" é um dos 4 clients legados migrados direto pra
+      # nb_apps em 2026-08-26 com o secret fixo "changeit-dev" (mesmo default do
+      # application-dev.yml), então normalmente não precisa setar nada aqui. Só sete no .env se o
+      # secret real desse client no NimbusAuth tiver sido rotacionado (padronizado com o mesmo
+      # mecanismo do NimbusDeskServer, que registrou seu client pela tela e por isso exige isto).
+      NIMBUSNOVAX_BFF_CLIENT_ID: ${NIMBUSNOVAX_BFF_CLIENT_ID:-nimbusnovax-bff}
+      NIMBUSNOVAX_BFF_CLIENT_SECRET: ${NIMBUSNOVAX_BFF_CLIENT_SECRET:-changeit-dev}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
