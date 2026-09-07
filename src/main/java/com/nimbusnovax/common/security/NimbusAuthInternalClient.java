@@ -1,5 +1,8 @@
 package com.nimbusnovax.common.security;
 
+import com.nimbussystems.commons.security.RemoteUserLookupClient;
+import com.nimbussystems.commons.security.RemoteUserSummary;
+
 import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
 
 import java.util.Collection;
@@ -14,10 +17,17 @@ import org.springframework.web.client.RestClient;
  * usuários (auditoria: requestedBy/approvedBy de Aditivo, ver UserDirectoryService), mesmo papel
  * do NimbusAuthInternalClient do CardsyncServer, mesmo endpoint (/internal/users) e mesmo secret
  * compartilhado (NIMBUS_INTERNAL_API_SECRET) - autenticado por header, não por token de usuário.
+ *
+ * <p>Implementa {@link RemoteUserLookupClient} (só {@code fetchUsers} - único método com 1
+ * chamador em todo o app, o {@code UserDirectoryService} compartilhado, extraído em 2026-09-07,
+ * embora hoje sem nenhum chamador ativo neste app - ver README do NimbusCommonsServer). Os outros
+ * 2 métodos abaixo continuam retornando o {@code UserSummary} local (mesmo shape de
+ * {@link RemoteUserSummary}, mas usado direto por código de domínio que não faz parte desta
+ * extração).
  */
 @Slf4j
 @Service
-public class NimbusAuthInternalClient {
+public class NimbusAuthInternalClient implements RemoteUserLookupClient {
 
   public record UserSummary(UUID id, String username, String name) {
   }
@@ -32,17 +42,18 @@ public class NimbusAuthInternalClient {
 
   /** Degrada silenciosamente (lista vazia) em qualquer falha - resolver nome de usuário é só
    *  contexto de exibição, nunca deve derrubar a listagem de aditivos/medições/parcelas. */
-  public List<UserSummary> fetchUsers(Collection<UUID> ids) {
+  @Override
+  public List<RemoteUserSummary> fetchUsers(Collection<UUID> ids) {
     if (ids == null || ids.isEmpty()) {
       return List.of();
     }
 
     try {
-      UserSummary[] result = restClient.get()
+      RemoteUserSummary[] result = restClient.get()
           .uri(uriBuilder -> uriBuilder.path("/internal/users").queryParam("ids", ids).build())
           .header("X-Internal-Secret", internalApiSecret)
           .retrieve()
-          .body(UserSummary[].class);
+          .body(RemoteUserSummary[].class);
 
       return result != null ? List.of(result) : List.of();
     } catch (Exception e) {
