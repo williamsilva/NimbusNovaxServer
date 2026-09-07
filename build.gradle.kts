@@ -31,7 +31,6 @@ repositories {
 	}
 }
 
-val testcontainersVersion = "1.21.3"
 val hibernateSpatialVersion = "6.5.2.Final"
 
 dependencies {
@@ -39,7 +38,7 @@ dependencies {
 	// código de com.nimbusnovax.common que era byte-idêntico ao do NimbusFlowServer, extraído pra
 	// não ter mais 2 cópias divergindo silenciosamente (ver README do NimbusCommonsServer pro que
 	// NÃO foi extraído e por quê).
-	implementation("com.nimbussystems:nimbus-commons-server:0.2.0")
+	implementation("com.nimbussystems:nimbus-commons-server:0.3.1")
 
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -76,8 +75,9 @@ dependencies {
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.security:spring-security-test")
-	testImplementation("org.testcontainers:junit-jupiter:$testcontainersVersion")
-	testImplementation("org.testcontainers:postgresql:$testcontainersVersion")
+	// AbstractPostgisContainerTest (container Postgres/PostGIS + wiring de datasource) - ver
+	// NimbusNovaxIntegrationTestSupport e README do NimbusCommonsServer.
+	testImplementation(testFixtures("com.nimbussystems:nimbus-commons-server:0.3.1"))
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
