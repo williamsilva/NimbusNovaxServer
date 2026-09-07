@@ -29,4 +29,9 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /workspace/build/libs/*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Nota 4 (2026-09-07): achado real revisando as variáveis do Railway - JAVA_OPTS estava
+# configurada no serviço (-XX:MaxRAMPercentage=75 -XX:+UseContainerSupport) mas nunca tinha efeito
+# nenhum: ENTRYPOINT em forma exec (array JSON) não passa por shell nenhum, então "${JAVA_OPTS}"
+# nunca seria expandido mesmo se estivesse escrito aqui. Forma shell (mesmo padrão já usado no
+# CardsyncServer/NimbusAuthServer) resolve.
+ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} -jar app.jar"]
