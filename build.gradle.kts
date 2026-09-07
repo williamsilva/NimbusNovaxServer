@@ -1,6 +1,6 @@
 plugins {
 	java
-	id("org.springframework.boot") version "3.3.2"
+	id("org.springframework.boot") version "4.0.2"
 	id("io.spring.dependency-management") version "1.1.6"
 }
 
@@ -31,14 +31,17 @@ repositories {
 	}
 }
 
-val hibernateSpatialVersion = "6.5.2.Final"
+// Boot 4.0.2 gerencia Hibernate ORM em 7.2.1.Final via BOM, mas hibernate-spatial (módulo à parte,
+// não coberto pelo BOM do Boot) ainda não tem release na linha 7.2.x - 7.0.2.Final é o mais recente
+// disponível (mesmo achado/mesma versão do NimbusFlowServer, confirmado via Maven Central).
+val hibernateSpatialVersion = "7.0.2.Final"
 
 dependencies {
 	// Fase 1 do levantamento de duplicação entre CardSync/NimbusFlow/NimbusNovax/NimbusAuth -
 	// código de com.nimbusnovax.common que era byte-idêntico ao do NimbusFlowServer, extraído pra
 	// não ter mais 2 cópias divergindo silenciosamente (ver README do NimbusCommonsServer pro que
 	// NÃO foi extraído e por quê).
-	implementation("com.nimbussystems:nimbus-commons-server:0.4.0")
+	implementation("com.nimbussystems:nimbus-commons-server:0.5.0")
 
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
@@ -49,14 +52,24 @@ dependencies {
 	implementation("org.springframework.session:spring-session-jdbc")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
+	// @EnableCaching (NimbusNovaxApplication) - Boot 4 tirou a autoconfiguração de cache do jar
+	// monolítico de autoconfigure e virou módulo/starter próprio (mesmo achado do NimbusFlowServer);
+	// sem isto, @EnableCaching falha a subida do contexto por falta de CacheManager.
+	implementation("org.springframework.boot:spring-boot-starter-cache")
 
-	implementation("org.flywaydb:flyway-core")
+	// Boot 4 moveu a autoconfiguração do Flyway pro módulo/starter próprio
+	// spring-boot-starter-flyway (achado real no NimbusFlowServer: sem isto, o Flyway nunca dispara
+	// e o Hibernate falha a validação de schema). Mesmo padrão já em produção no
+	// CardsyncServer/NimbusAuthServer.
+	implementation("org.springframework.boot:spring-boot-starter-flyway")
 	implementation("org.flywaydb:flyway-database-postgresql")
 
 	implementation("org.hibernate.orm:hibernate-spatial:$hibernateSpatialVersion")
 
-	// Fase 7: @Auditable (com.nimbusnovax.common.audit) via Spring AOP.
-	implementation("org.springframework.boot:spring-boot-starter-aop")
+	// Fase 7: @Auditable (com.nimbusnovax.common.audit) via Spring AOP. Boot 4 renomeou
+	// spring-boot-starter-aop -> spring-boot-starter-aspectj (mesmo achado do NimbusCommonsServer/
+	// NimbusFlowServer).
+	implementation("org.springframework.boot:spring-boot-starter-aspectj")
 
 	// com.nimbusnovax.common.notification.mail - config de e-mail (FAKE/SMTP/API_KEY), mesmas
 	// starters usadas pelo NimbusAuth/CardsyncServer pra isso.
@@ -77,7 +90,7 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	// AbstractPostgisContainerTest (container Postgres/PostGIS + wiring de datasource) - ver
 	// NimbusNovaxIntegrationTestSupport e README do NimbusCommonsServer.
-	testImplementation(testFixtures("com.nimbussystems:nimbus-commons-server:0.4.0"))
+	testImplementation(testFixtures("com.nimbussystems:nimbus-commons-server:0.5.0"))
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
