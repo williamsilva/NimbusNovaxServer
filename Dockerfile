@@ -9,8 +9,16 @@
 # Build Logs e sem botão de redeploy/retry na UI, num commit que builda limpo local (Gradle +
 # docker compose build) - mesmo diagnóstico (infra do Railway, não este Dockerfile/código). Fix
 # idêntico: um commit novo pra forçar uma tentativa de build do zero.
+# Nota 3 (2026-09-06): "Could not resolve com.nimbussystems:nimbus-commons-server... Username must
+# not be null!" no ./gradlew bootJar, mesmo com GITHUB_ACTOR/GITHUB_TOKEN configurados nas
+# Variables do serviço no Railway - variáveis de serviço só chegam ao CONTAINER em runtime, nunca
+# ao processo de build do Dockerfile, a menos que sejam declaradas explicitamente com ARG no stage
+# que precisa delas (Railway então injeta como --build-arg automaticamente). Sem os ARG abaixo,
+# System.getenv("GITHUB_ACTOR")/("GITHUB_TOKEN") do build.gradle.kts sempre voltam null aqui dentro.
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /workspace
+ARG GITHUB_ACTOR
+ARG GITHUB_TOKEN
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle ./gradle
 RUN chmod +x gradlew && ./gradlew --version
