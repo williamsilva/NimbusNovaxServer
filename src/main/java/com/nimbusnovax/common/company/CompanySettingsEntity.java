@@ -67,7 +67,12 @@ public class CompanySettingsEntity {
   private Instant createdAt;
 
   @UpdateTimestamp
-  @Column(name = "updated_at")
+  // nullable=false faltava aqui desde sempre - a migration (V20260822_02) já criava a coluna como
+  // NOT NULL, só que o Hibernate 6.5.x não validava essa discrepância tão rigorosamente quanto o
+  // 7.2.1 (gerenciado pelo Boot 4.0.2), que passou a barrar o contexto na subida com
+  // SchemaManagementException (achado real rodando os testes, não só compilando - mesmo padrão do
+  // ApprovalLimit/Department.userIds no NimbusFlowServer).
+  @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
   @Column(name = "created_by_id")
