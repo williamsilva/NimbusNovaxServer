@@ -27,6 +27,10 @@ RUN ./gradlew bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+# postgresql-client fornece o pg_dump usado pelo backup interno (ver
+# com.nimbusnovax.common.backup.PgDumpRunner/InternalBackupController) - mesmo pacote já instalado
+# no NimbusFlowServer/NimbusDeskServer pelo mesmo motivo.
+RUN apk add --no-cache postgresql-client
 COPY --from=build /workspace/build/libs/*.jar app.jar
 EXPOSE 8080
 # Nota 4 (2026-09-07): achado real revisando as variáveis do Railway - JAVA_OPTS estava
