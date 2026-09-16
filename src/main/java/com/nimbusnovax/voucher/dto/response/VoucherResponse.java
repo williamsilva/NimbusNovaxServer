@@ -1,6 +1,7 @@
 package com.nimbusnovax.voucher.dto.response;
 
 import com.nimbusnovax.administracao.model.enums.TypePersonEnum;
+import com.nimbusnovax.voucher.model.enums.PaymentMethodEnum;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,6 +29,7 @@ public record VoucherResponse(
     CancellationReasonRefResponse cancellationReason,
     List<ItemResponse> tickets,
     List<ItemResponse> foods,
+    List<AdvancePaymentResponse> advancePayments,
     Instant createdAt,
     Instant updatedAt) {
 
@@ -39,5 +41,8 @@ public record VoucherResponse(
 
   public record ItemResponse(
       UUID id, UUID productId, String productName, Integer quantity, BigDecimal unitPrice, BigDecimal totalPrice) {
+  }
+
+  public record AdvancePaymentResponse(UUID id, PaymentMethodEnum paymentMethod, BigDecimal amount) {
   }
 }

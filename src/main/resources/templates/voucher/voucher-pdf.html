@@ -185,7 +185,7 @@
         <div class="payment-value" th:text="${'R$ ' + #numbers.formatDecimal(voucher.totalPrice, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
       </td>
       <td>
-        <div class="payment-label">Depósito Antecipado</div>
+        <div class="payment-label">Pagamento Antecipado</div>
         <div class="payment-value" th:text="${'R$ ' + #numbers.formatDecimal(voucher.advanceValue, 1, 'POINT', 2, 'COMMA')}">R$ 0,00</div>
       </td>
       <td class="remaining">

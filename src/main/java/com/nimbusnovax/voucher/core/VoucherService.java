@@ -8,6 +8,7 @@ import com.nimbussystems.commons.security.CurrentUserProvider;
 import com.nimbussystems.commons.web.SearchRequest;
 import com.nimbusnovax.voucher.dto.request.VoucherRequest;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;
+import com.nimbusnovax.voucher.model.AdvancePayment;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Food;
 import com.nimbusnovax.voucher.model.Ticket;
@@ -151,11 +152,16 @@ public class VoucherService {
   private void applyRequest(Voucher voucher, VoucherRequest request) {
     voucher.setNote(request.note());
     voucher.setVisitDate(request.visitDate());
-    voucher.setAdvanceValue(request.advanceValue());
 
     replaceItems(voucher.getTickets(), request.tickets(), Ticket::new, voucher);
     replaceItems(voucher.getFoods(), request.foods(), Food::new, voucher);
+    replaceAdvancePayments(voucher.getAdvancePayments(), request.advancePayments(), voucher);
     voucher.calculateTotalPrice();
+
+    if (voucher.getAdvanceValue().compareTo(voucher.getTotalPrice()) > 0) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT,
+          "O valor do pagamento antecipado não pode ser maior que o valor total do voucher.");
+    }
   }
 
   private <T extends VoucherItem> void replaceItems(
@@ -175,6 +181,21 @@ public class VoucherService {
       item.setQuantity(itemRequest.quantity());
       item.setUnitPrice(itemRequest.unitPrice() != null ? itemRequest.unitPrice() : product.getAmount());
       target.add(item);
+    }
+  }
+
+  private void replaceAdvancePayments(
+      List<AdvancePayment> target, List<VoucherRequest.AdvancePaymentRequest> source, Voucher voucher) {
+    target.clear();
+    if (source == null) {
+      return;
+    }
+    for (VoucherRequest.AdvancePaymentRequest paymentRequest : source) {
+      AdvancePayment payment = new AdvancePayment();
+      payment.setVoucher(voucher);
+      payment.setPaymentMethodEnum(paymentRequest.paymentMethod());
+      payment.setAmount(paymentRequest.amount());
+      target.add(payment);
     }
   }
 
@@ -211,6 +232,8 @@ public class VoucherService {
   VoucherResponse toResponse(Voucher voucher) {
     List<VoucherResponse.ItemResponse> tickets = voucher.getTickets().stream().map(this::toItemResponse).toList();
     List<VoucherResponse.ItemResponse> foods = voucher.getFoods().stream().map(this::toItemResponse).toList();
+    List<VoucherResponse.AdvancePaymentResponse> advancePayments =
+        voucher.getAdvancePayments().stream().map(this::toAdvancePaymentResponse).toList();
 
     return new VoucherResponse(
         voucher.getId(),
@@ -234,6 +257,7 @@ public class VoucherService {
                 voucher.getCancellationReason().getId(), voucher.getCancellationReason().getName()),
         tickets,
         foods,
+        advancePayments,
         voucher.getCreatedAt(),
         voucher.getUpdatedAt());
   }
@@ -250,5 +274,10 @@ public class VoucherService {
         item.getQuantity(),
         item.getUnitPrice(),
         item.getTotalPrice());
+  }
+
+  private VoucherResponse.AdvancePaymentResponse toAdvancePaymentResponse(AdvancePayment payment) {
+    return new VoucherResponse.AdvancePaymentResponse(
+        payment.getId(), payment.getPaymentMethodEnum(), payment.getAmount());
   }
 }

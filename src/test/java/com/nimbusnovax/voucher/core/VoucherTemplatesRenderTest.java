@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.nimbusnovax.administracao.model.enums.TypePersonEnum;
 import com.nimbusnovax.common.company.CompanySettingsModel;
 import com.nimbusnovax.voucher.dto.response.VoucherResponse;
+import com.nimbusnovax.voucher.model.enums.PaymentMethodEnum;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -58,11 +59,16 @@ class VoucherTemplatesRenderTest {
             UUID.randomUUID(), UUID.randomUUID(), "Almoço", 5, new BigDecimal("35.00"), new BigDecimal("175.00")))
         : List.of();
 
+    List<VoucherResponse.AdvancePaymentResponse> advancePayments = List.of(
+        new VoucherResponse.AdvancePaymentResponse(UUID.randomUUID(), PaymentMethodEnum.BANK_DEPOSIT,
+            new BigDecimal("1640.00")));
+
     return new VoucherResponse(
         UUID.randomUUID(), "EVT1922", StatusVoucherEnum.DEALING, TypePersonEnum.PHYSICAL, null,
         LocalDate.of(2026, 1, 16), 2, new BigDecimal("3280.00"), new BigDecimal("1640.00"),
         new BigDecimal("3280.00"), withFoods ? new BigDecimal("175.00") : BigDecimal.ZERO,
-        null, null, client, promoter, tourGuide, null, tickets, foods, Instant.now(), Instant.now());
+        null, null, client, promoter, tourGuide, null, tickets, foods, advancePayments, Instant.now(),
+        Instant.now());
   }
 
   private CompanySettingsModel sampleCompany() {

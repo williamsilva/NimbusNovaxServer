@@ -109,6 +109,10 @@ public class Voucher {
   @OneToMany(mappedBy = "voucher", cascade = CascadeType.ALL, orphanRemoval = true)
   private List<Food> foods = new ArrayList<>();
 
+  @OrderBy("id")
+  @OneToMany(mappedBy = "voucher", cascade = CascadeType.ALL, orphanRemoval = true)
+  private List<AdvancePayment> advancePayments = new ArrayList<>();
+
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
@@ -203,5 +207,7 @@ public class Voucher {
     totalPriceFoods = foods.stream().map(Food::getTotalPrice).reduce(ZERO, BigDecimal::add);
 
     totalPrice = totalPriceTickets.add(totalPriceFoods);
+
+    advanceValue = advancePayments.stream().map(AdvancePayment::getAmount).reduce(ZERO, BigDecimal::add);
   }
 }
