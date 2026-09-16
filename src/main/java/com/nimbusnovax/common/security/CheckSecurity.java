@@ -105,14 +105,6 @@ public @interface CheckSecurity {
     }
   }
 
-  @interface EmailLog {
-    @Target(METHOD)
-    @Retention(RUNTIME)
-    @PreAuthorize("@nnSecurity.canConsultEmailLog()")
-    @interface CanConsult {
-    }
-  }
-
   @interface Agent {
     @Target(METHOD)
     @Retention(RUNTIME)

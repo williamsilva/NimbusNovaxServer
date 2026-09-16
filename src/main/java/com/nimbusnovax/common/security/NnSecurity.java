@@ -70,11 +70,6 @@ public class NnSecurity {
     return currentUserProvider.hasAuthority("PERM_MOTIVO_CANCELAMENTO_DELETE");
   }
 
-  /* Email Log */
-  public boolean canConsultEmailLog() {
-    return currentUserProvider.hasAuthority("PERM_EMAIL_LOG_CONSULT");
-  }
-
   /* Agent */
   public boolean canConsultAgents() {
     return currentUserProvider.hasAuthority("PERM_AGENTES_CONSULT");

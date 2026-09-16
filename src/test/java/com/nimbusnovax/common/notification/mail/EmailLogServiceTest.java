@@ -12,26 +12,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbussystems.commons.web.SearchRequest;
-import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 
 class EmailLogServiceTest {
 
   private final EmailLogRepository repository = mock(EmailLogRepository.class);
-  private final EmailLogSpecs emailLogSpecs = mock(EmailLogSpecs.class);
-  private final EmailLogService service = new EmailLogService(repository, emailLogSpecs);
+  private final EmailLogService service = new EmailLogService(repository);
 
   @Test
   void logSentJoinsAllRecipientsAndStoresBody() {
@@ -93,40 +83,5 @@ class EmailLogServiceTest {
     assertThat(saved.getStatus()).isEqualTo(EmailLogStatus.FAILED);
     assertThat(saved.getErrorMessage()).hasSize(1000);
     assertThat(saved.getBody()).isEqualTo("<html>corpo</html>");
-  }
-
-  /** search() virou uma delegação fina pra EmailLogSpecs (monta a Specification a partir do
-   *  SearchRequest) + repository.findAll(spec, pageable) - filtro/ordenação/paginação de verdade
-   *  agora acontecem no banco, não em memória (ver EmailLogSpecs). Cobrir a lógica de filtro em si
-   *  exigiria um teste de integração com banco de verdade (Specification/Criteria API não executa
-   *  contra mocks) - fora do escopo deste teste unitário, que só garante a delegação certa. */
-  @Test
-  void searchDelegatesToEmailLogSpecsAndRepository() {
-    SearchRequest request = new SearchRequest(0, 20, null, Map.of(), null, Map.of("status", List.of("FAILED")));
-    Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Direction.DESC, "sentAt"));
-
-    @SuppressWarnings("unchecked")
-    Specification<EmailLogEntity> spec = mock(Specification.class);
-    when(emailLogSpecs.fromRequest(request)).thenReturn(spec);
-
-    EmailLogEntity failedToB = entityOf("b@example.com", "Pagamento liberado", EmailLogStatus.FAILED, "payment_released");
-    Page<EmailLogEntity> expected = new PageImpl<>(List.of(failedToB), pageable, 1);
-    when(repository.findAll(spec, pageable)).thenReturn(expected);
-
-    Page<EmailLogEntity> result = service.search(request, pageable);
-
-    assertThat(result.getContent()).containsExactly(failedToB);
-    assertThat(result.getTotalElements()).isEqualTo(1);
-  }
-
-  private EmailLogEntity entityOf(String recipients, String subject, EmailLogStatus status, String eventType) {
-    return EmailLogEntity.builder()
-        .eventType(eventType)
-        .recipients(recipients)
-        .subject(subject)
-        .template("mail/x")
-        .status(status)
-        .sentAt(Instant.now())
-        .build();
   }
 }
