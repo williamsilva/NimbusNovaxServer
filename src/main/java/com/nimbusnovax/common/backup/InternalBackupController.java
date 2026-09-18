@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /** API interna machine-to-machine (rota /internal/backup/**, ver InternalBackupSecretFilter) -
- *  consumida pelo NimbusAuth pra compor o backup centralizado do ecossistema Nimbus. Espelha o
- *  InternalBackupController já existente no NimbusAuthServer (que este próprio app já consome
- *  hoje via NimbusAuthInternalClient) - agora na direção inversa.
+ *  consumida pelo NimbusCore pra compor o backup centralizado do ecossistema Nimbus. Espelha o
+ *  InternalBackupController já existente no NimbusCoreServer (que este próprio app já consome
+ *  hoje via NimbusCoreInternalClient) - agora na direção inversa.
  *
  * <p>Só expõe /database, sem /files: este app não tem storage externo (S3/R2) nem volume de
  * disco - o único arquivo binário do domínio (logo da empresa, ver CompanySettingsEntity) fica

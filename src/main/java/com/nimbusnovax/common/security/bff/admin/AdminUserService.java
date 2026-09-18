@@ -12,11 +12,11 @@ import com.nimbussystems.commons.security.bff.admin.AdminGroupOptionResponse;
 
 import com.nimbussystems.commons.security.bff.admin.AdminFilterSupport;
 
-import com.nimbusnovax.common.security.NimbusAuthAdminClient;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroupOption;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUser;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUserInput;
-import com.nimbusnovax.common.security.NimbusAuthInternalClient;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawGroupOption;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawUser;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawUserInput;
+import com.nimbusnovax.common.security.NimbusCoreInternalClient;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
@@ -36,9 +36,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Administração de usuários (menu Segurança) - camada de autorização (defesa em profundidade,
- * mesmo padrão de SupplierService: a checagem real também é feita pelo próprio NimbusAuth via as
+ * mesmo padrão de SupplierService: a checagem real também é feita pelo próprio NimbusCore via as
  * permissões PERM_USERS_* no token repassado, isto aqui só evita a chamada de rede desnecessária e
- * falha mais rápido/com mensagem clara) + a regra de "usuário é global no NimbusAuth" (ver
+ * falha mais rápido/com mensagem clara) + a regra de "usuário é global no NimbusCore" (ver
  * update()).
  */
 @Service
@@ -47,15 +47,15 @@ public class AdminUserService {
 
   private static final String NIMBUSNOVAX_APP_KEY = "nimbusnovax";
 
-  /** Espelha USER_STATUS_CODE_MAP do frontend (user-status.enum.ts) - o status cru do NimbusAuth
+  /** Espelha USER_STATUS_CODE_MAP do frontend (user-status.enum.ts) - o status cru do NimbusCore
    *  é um Integer, mas os filtros (coluna e painel avançado) mandam os nomes do enum. */
   private static final Map<Integer, String> USER_STATUS_NAMES = Map.of(
       0, "NULL", 1, "ACTIVE", 2, "INACTIVE", 3, "BLOCKED", 4, "DISABLED", 5, "PENDING_PASSWORD");
 
-  private final NimbusAuthAdminClient client;
-  private final NimbusAuthInternalClient internalClient;
+  private final NimbusCoreAdminClient client;
+  private final NimbusCoreInternalClient internalClient;
 
-  /** Só usuários com pelo menos um grupo do NimbusNovax - usuários são globais no NimbusAuth (sem
+  /** Só usuários com pelo menos um grupo do NimbusNovax - usuários são globais no NimbusCore (sem
    *  app_key própio), então a busca crua traz todo mundo (inclusive de outros apps Nimbus, ex.:
    *  Cardsync); decisão explícita do usuário (2026-08-05): não expor esse diretório completo aqui. */
   public List<AdminUserResponse> list(String accessToken) {
@@ -77,9 +77,9 @@ public class AdminUserService {
   /** Lista leve (id/name/userName) pros seletores de usuário - mesmo recorte de list() (só
    *  vinculados ao NimbusNovax), mas usada por QUALQUER usuário autenticado (ex.: seletor de
    *  responsável em Chamados/Departamentos), não só quem tem USERS_CONSULT - por isso busca via
-   *  API interna (secret compartilhado, já escopada por app_key no próprio NimbusAuth) em vez de
+   *  API interna (secret compartilhado, já escopada por app_key no próprio NimbusCore) em vez de
    *  reaproveitar client.searchAllUsers (que repassa o token do usuário chamador pro
-   *  POST /api/v1/users/search administrativo do NimbusAuth, exigindo USERS_CONSULT de verdade -
+   *  POST /api/v1/users/search administrativo do NimbusCore, exigindo USERS_CONSULT de verdade -
    *  bug real: usuário com CHAMADO_CONSULT mas sem USERS_CONSULT via /forbidden ao abrir
    *  Chamados). */
   public List<AdminUserMinimalResponse> options() {
@@ -90,11 +90,11 @@ public class AdminUserService {
   }
 
   /**
-   * Sem paginação/filtro real no NimbusAuth pra esse recorte (ver NimbusAuthAdminClient) - busca
+   * Sem paginação/filtro real no NimbusCore pra esse recorte (ver NimbusCoreAdminClient) - busca
    * tudo (volume esperado é pequeno, mesma premissa do client) e filtra/ordena/pagina em memória;
    * embrulhado numa {@link PageImpl} só pra reaproveitar o mesmo envelope {@code PagedModel} das
    * demais telas (ver {@link BffAdminUsersController#search}) - sem Specification/JPA possível
-   * aqui, o dado é remoto (NimbusAuth via HTTP).
+   * aqui, o dado é remoto (NimbusCore via HTTP).
    */
   public Page<AdminUserResponse> search(String accessToken, AdminSearchRequest request) {
     List<AdminUserResponse> all = client.searchAllUsers(accessToken).stream()
@@ -185,7 +185,7 @@ public class AdminUserService {
   }
 
   /**
-   * Usuário é global no NimbusAuth (sem app_key própio) - se o e-mail já existir (criado por outro
+   * Usuário é global no NimbusCore (sem app_key própio) - se o e-mail já existir (criado por outro
    * app Nimbus, ex.: Cardsync), POST /api/v1/users falharia com 409 (USER_USERNAME_ALREADY_EXISTS),
    * mesmo o usuário não tendo nenhum grupo do NimbusNovax ainda. "Cadastrar" nesse caso não é criar
    * um usuário novo, é conceder acesso ao NimbusNovax a um usuário que já existe - mesmo caminho de
@@ -222,7 +222,7 @@ public class AdminUserService {
 
   /**
    * PUT /api/v1/users/{id} faz replace total dos grupos do usuário (ver UserService.update no
-   * NimbusAuth) - se mandássemos só os groupIds do formulário (só grupos do NimbusNovax), qualquer
+   * NimbusCore) - se mandássemos só os groupIds do formulário (só grupos do NimbusNovax), qualquer
    * grupo de outro app Nimbus que esse usuário já tivesse seria silenciosamente removido. Busca o
    * estado atual, preserva os grupos de fora do NimbusNovax intactos, funde com a nova seleção.
    */

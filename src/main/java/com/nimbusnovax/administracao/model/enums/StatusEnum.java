@@ -11,7 +11,7 @@ import lombok.Getter;
  * client/provider/promoter/employee/tourGuide), Product e CancellationReason - mesmo código 1/2/3
  * do sistema legado (Novax antigo). Código 0 (NULL/"sem papel") não é um membro daqui: nos campos
  * de status por papel do Agent, o próprio Agent mapeia 0 &lt;-&gt; ausência (null) na sua camada de
- * getter/setter, no mesmo espírito de StatusUserEnum no NimbusAuth.
+ * getter/setter, no mesmo espírito de StatusUserEnum no NimbusCore.
  */
 @Getter
 public enum StatusEnum {

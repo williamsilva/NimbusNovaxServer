@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 /** Menu "Configurações &gt; Empresa" - mesmo padrão de {@code BffEmailSettingsController}.
- *  Permissões próprias do app nimbusnovax, seguem seedadas via migration no repo NimbusAuth
+ *  Permissões próprias do app nimbusnovax, seguem seedadas via migration no repo NimbusCore
  *  (COMPANY_SETTINGS_CONSULT/COMPANY_SETTINGS_PROCESS). Endpoints de logo ficam aqui (autenticados,
  *  mesma permissão de PROCESS) - a leitura pública da imagem em si é servida à parte, por
  *  {@link PublicCompanyLogoController}, fora de /bff/**. */

@@ -4,7 +4,7 @@ import com.nimbusnovax.administracao.model.CancellationReason;
 import com.nimbusnovax.administracao.repository.CancellationReasonRepository;
 import com.nimbusnovax.common.company.CompanySettingsService;
 import com.nimbussystems.commons.notification.mail.EmailSenderService;
-import com.nimbusnovax.common.security.NimbusAuthInternalClient;
+import com.nimbusnovax.common.security.NimbusCoreInternalClient;
 import com.nimbusnovax.voucher.model.ConfigVoucher;
 import com.nimbusnovax.voucher.model.Voucher;
 import com.nimbusnovax.voucher.model.enums.StatusVoucherEnum;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
  * (4h10). O motivo de cancelamento automático é o registro "System" (generation SYSTEM, protegido
  * contra edição/exclusão na UI - ver CancellationReasonService) migrado do legado ({@code
  * WsConst.SYSTEM}). Destinatários do aviso de vencidos são os usuários com a permissão
- * VOUCHER_NOTIFICATION no NimbusAuth (ver NimbusAuthInternalClient.fetchOptionsByPermission) - não
+ * VOUCHER_NOTIFICATION no NimbusCore (ver NimbusCoreInternalClient.fetchOptionsByPermission) - não
  * mais uma lista de e-mails configurada manualmente (ConfigVoucher.notificationEmails, removido).
  */
 @Slf4j
@@ -43,7 +43,7 @@ public class VoucherScheduledTasks {
   private final ConfigVoucherService configVoucherService;
   private final CompanySettingsService companySettingsService;
   private final EmailSenderService emailSenderService;
-  private final NimbusAuthInternalClient nimbusAuthInternalClient;
+  private final NimbusCoreInternalClient nimbusCoreInternalClient;
 
   /** Não é readOnly: apesar da consulta ser só leitura, o método dispara e-mail e sua auditoria
    *  em email_log (efeito colateral de verdade) - ver EmailLogService.logSent, que precisou virar
@@ -82,18 +82,18 @@ public class VoucherScheduledTasks {
     log.info("Warning e-mail sent for {} expired vouchers.", vouchers.size());
   }
 
-  /** Degrada pra lista vazia em qualquer falha ao consultar o NimbusAuth (ex.: indisponibilidade
+  /** Degrada pra lista vazia em qualquer falha ao consultar o NimbusCore (ex.: indisponibilidade
    *  temporária) - um job agendado não deve lançar exceção não tratada, só logar e pular o envio
    *  desta execução (a próxima tentativa é amanhã de qualquer forma). */
   private List<String> resolveNotificationRecipients() {
     try {
-      return nimbusAuthInternalClient.fetchOptionsByPermission(NIMBUSNOVAX_APP_KEY, VOUCHER_NOTIFICATION_PERMISSION)
+      return nimbusCoreInternalClient.fetchOptionsByPermission(NIMBUSNOVAX_APP_KEY, VOUCHER_NOTIFICATION_PERMISSION)
           .stream()
-          .map(NimbusAuthInternalClient.UserSummary::username)
+          .map(NimbusCoreInternalClient.UserSummary::username)
           .filter(email -> email != null && !email.isBlank())
           .toList();
     } catch (Exception e) {
-      log.warn("Falha ao resolver destinatários de VOUCHER_NOTIFICATION no NimbusAuth: {}", e.getMessage());
+      log.warn("Falha ao resolver destinatários de VOUCHER_NOTIFICATION no NimbusCore: {}", e.getMessage());
       return List.of();
     }
   }

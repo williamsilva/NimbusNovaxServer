@@ -28,10 +28,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.security.NimbusAuthAdminClient;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroup;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawPermissionOption;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUserMinimal;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawGroup;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawPermissionOption;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawUserMinimal;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -46,7 +46,7 @@ class AdminGroupServiceTest {
 
   private static final String TOKEN = "token";
 
-  private final NimbusAuthAdminClient client = mock(NimbusAuthAdminClient.class);
+  private final NimbusCoreAdminClient client = mock(NimbusCoreAdminClient.class);
   private final AdminGroupService service = new AdminGroupService(client);
 
   @Test

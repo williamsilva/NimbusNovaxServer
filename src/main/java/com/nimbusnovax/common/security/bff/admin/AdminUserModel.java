@@ -17,7 +17,7 @@ import org.springframework.hateoas.server.core.Relation;
 
 /** Mesmo shape de {@link AdminUserResponse} - usado só pelo endpoint de busca paginada, ver
  *  {@code com.nimbusnovax.voucher.representation.VoucherModel} para o porquê dessa separação.
- *  Dado remoto (NimbusAuth via HTTP) - sem Specification/JPA possível aqui, só o envelope de
+ *  Dado remoto (NimbusCore via HTTP) - sem Specification/JPA possível aqui, só o envelope de
  *  resposta muda pra ficar consistente com as demais telas (ver AdminUserService.search). */
 @Getter
 @Setter

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
  *  tem sessão/cookie ou Bearer token. Caminho ({@link CompanySettingsService#LOGO_PATH}) fica de
  *  propósito fora de /api/** e /bff/** - não casa com nenhuma das duas security filter chains de
  *  {@code SecurityConfig}, então passa direto sem exigir autenticação (mesmo mecanismo dos assets
- *  estáticos de marca do NimbusAuth/CardsyncServer, ex.: /assets/cardsync-logo.png). */
+ *  estáticos de marca do NimbusCore/CardsyncServer, ex.: /assets/cardsync-logo.png). */
 @RestController
 @RequiredArgsConstructor
 public class PublicCompanyLogoController {

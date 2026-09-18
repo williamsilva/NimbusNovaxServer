@@ -22,11 +22,11 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.nimbusnovax.common.security.NimbusAuthAdminClient;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawGroupOption;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUser;
-import com.nimbusnovax.common.security.NimbusAuthAdminClient.RawUserInput;
-import com.nimbusnovax.common.security.NimbusAuthInternalClient;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawGroupOption;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawUser;
+import com.nimbusnovax.common.security.NimbusCoreAdminClient.RawUserInput;
+import com.nimbusnovax.common.security.NimbusCoreInternalClient;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -39,15 +39,15 @@ import org.junit.jupiter.api.Test;
  * não observável instanciando o service direto com "new" como este teste faz - cobrir a rejeição
  * em si exigiria um teste de integração contra o controller, não existe nenhum ainda pra nenhum
  * controller admin deste projeto). Cobre, principalmente, a regra de "usuário é global no
- * NimbusAuth" - update()/create() precisam preservar grupos de outros apps Nimbus (ex.: Cardsync)
+ * NimbusCore" - update()/create() precisam preservar grupos de outros apps Nimbus (ex.: Cardsync)
  * que o usuário já tenha, já que PUT /api/v1/users/{id} faz replace total da lista de grupos.
  */
 class AdminUserServiceTest {
 
   private static final String TOKEN = "token";
 
-  private final NimbusAuthAdminClient client = mock(NimbusAuthAdminClient.class);
-  private final NimbusAuthInternalClient internalClient = mock(NimbusAuthInternalClient.class);
+  private final NimbusCoreAdminClient client = mock(NimbusCoreAdminClient.class);
+  private final NimbusCoreInternalClient internalClient = mock(NimbusCoreInternalClient.class);
   private final AdminUserService service = new AdminUserService(client, internalClient);
 
   @Test
@@ -136,7 +136,7 @@ class AdminUserServiceTest {
   void optionsDelegatesToInternalClientSortedByName() {
     UUID userId = UUID.randomUUID();
     when(internalClient.fetchOptionsByAppKey("nimbusnovax"))
-        .thenReturn(List.of(new NimbusAuthInternalClient.UserSummary(userId, "fiscal@acquamania.com.br", "Fiscal")));
+        .thenReturn(List.of(new NimbusCoreInternalClient.UserSummary(userId, "fiscal@acquamania.com.br", "Fiscal")));
 
     List<AdminUserMinimalResponse> result = service.options();
 

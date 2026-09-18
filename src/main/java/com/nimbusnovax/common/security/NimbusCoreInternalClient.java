@@ -3,7 +3,7 @@ package com.nimbusnovax.common.security;
 import com.nimbussystems.commons.security.RemoteUserLookupClient;
 import com.nimbussystems.commons.security.RemoteUserSummary;
 
-import com.nimbussystems.commons.security.NimbusAuthProxyProperties;
+import com.nimbussystems.commons.security.NimbusCoreProxyProperties;
 
 import java.util.Collection;
 import java.util.List;
@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 /**
- * Cliente HTTP interno (machine-to-machine) pro NimbusAuth - hoje só resolve nome/username de
+ * Cliente HTTP interno (machine-to-machine) pro NimbusCore - hoje só resolve nome/username de
  * usuários (auditoria: requestedBy/approvedBy de Aditivo, ver UserDirectoryService), mesmo papel
- * do NimbusAuthInternalClient do CardsyncServer, mesmo endpoint (/internal/users) e mesmo secret
+ * do NimbusCoreInternalClient do CardsyncServer, mesmo endpoint (/internal/users) e mesmo secret
  * compartilhado (NIMBUS_INTERNAL_API_SECRET) - autenticado por header, não por token de usuário.
  *
  * <p>Implementa {@link RemoteUserLookupClient} (só {@code fetchUsers} - único método com 1
@@ -27,7 +27,7 @@ import org.springframework.web.client.RestClient;
  */
 @Slf4j
 @Service
-public class NimbusAuthInternalClient implements RemoteUserLookupClient {
+public class NimbusCoreInternalClient implements RemoteUserLookupClient {
 
   public record UserSummary(UUID id, String username, String name) {
   }
@@ -35,7 +35,7 @@ public class NimbusAuthInternalClient implements RemoteUserLookupClient {
   private final RestClient restClient;
   private final String internalApiSecret;
 
-  public NimbusAuthInternalClient(RestClient.Builder restClientBuilder, NimbusAuthProxyProperties props) {
+  public NimbusCoreInternalClient(RestClient.Builder restClientBuilder, NimbusCoreProxyProperties props) {
     this.restClient = restClientBuilder.baseUrl(props.getBaseUrl()).build();
     this.internalApiSecret = props.getInternalApiSecret();
   }
@@ -57,13 +57,13 @@ public class NimbusAuthInternalClient implements RemoteUserLookupClient {
 
       return result != null ? List.of(result) : List.of();
     } catch (Exception e) {
-      log.warn("Falha ao resolver usuários no NimbusAuth: {}", e.getMessage());
+      log.warn("Falha ao resolver usuários no NimbusCore: {}", e.getMessage());
       return List.of();
     }
   }
 
   /** Lista leve dos usuários vinculados a algum grupo do app_key informado (ver
-   *  GET /internal/users/options no NimbusAuth) - autenticado só pelo secret compartilhado, não
+   *  GET /internal/users/options no NimbusCore) - autenticado só pelo secret compartilhado, não
    *  pelo token do usuário chamador, então não exige USERS_CONSULT (ver AdminUserService.options
    *  /AdminUserService.optionsFilter) nem expõe o diretório global de outros apps Nimbus (ao
    *  contrário de GET /api/v1/users/options, que é global de propósito). Não degrada
@@ -81,7 +81,7 @@ public class NimbusAuthInternalClient implements RemoteUserLookupClient {
   }
 
   /** Usuários (do app_key informado) que têm a permissão pedida (ver GET
-   *  /internal/users/permissions no NimbusAuth) - usado por {@code VoucherScheduledTasks} pra
+   *  /internal/users/permissions no NimbusCore) - usado por {@code VoucherScheduledTasks} pra
    *  resolver os destinatários do aviso de vouchers vencidos a partir de quem tem
    *  VOUCHER_NOTIFICATION, em vez de uma lista de e-mails configurada manualmente e sujeita a
    *  ficar desincronizada do catálogo real de usuários/grupos. Não degrada silenciosamente (mesmo
